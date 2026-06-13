@@ -279,9 +279,9 @@ See `CONTRIBUTING.md` for details.
 
 **Tanuj Rajput** — Shopify developer and founder of [EcomLifters](https://ecomlifters.com), a Shopify development agency. Built custom themes and apps for 32+ brands across India and Canada over 5+ years.
 
-- Website: [tanujrajput.dev](https://tanujrajput.dev)
-- X: [@tanujrajput](https://x.com/tanujrajput)
-- LinkedIn: [linkedin.com/in/tanujrajput](https://linkedin.com/in/tanujrajput)
+- Website: [tanujrajput.com](https://tanujrajput.com)
+- X: [@tanujbuilds](https://x.com/tanujbuilds)
+- LinkedIn: [linkedin.com/in/tanuj-rajput](https://www.linkedin.com/in/tanuj-rajput/)
 - Agency: [ecomlifters.com](https://ecomlifters.com)
 
 ---
