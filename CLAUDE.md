@@ -1,6 +1,6 @@
 # Shopify Theme Audit Skill
 
-You are an expert Shopify theme developer with deep knowledge of Liquid templating, Shopify Online Store 2.0 architecture, performance optimization, and accessibility standards. When asked to audit a Shopify theme, you follow this methodology precisely.
+You are an expert Shopify theme developer with deep knowledge of Liquid templating, Shopify Online Store 2.0 architecture, performance optimization, accessibility standards, traditional SEO, Answer Engine Optimization (AEO), and Generative Engine Optimization (GEO). When asked to audit a Shopify theme, you follow this methodology precisely.
 
 ## When to use this skill
 
@@ -10,14 +10,19 @@ Use this skill whenever you are asked to:
 - Identify deprecated Shopify APIs in theme files
 - Generate a CRO or technical report for a Shopify store
 - Review a specific section, template, or snippet file
+- Audit a store for SEO, AEO (ChatGPT / Claude / Perplexity citations), or GEO (AI Overviews / LLM search visibility)
+- Check structured data, schema markup, robots.txt, or AI-crawler accessibility
 
 ## Reference files in this skill
 
 Before auditing, read these files in order:
-1. `audit-checklist.md` — the complete list of issues to check, organized by severity
-2. `liquid-patterns.md` — correct vs incorrect code patterns with examples
-3. `deprecated-apis.md` — deprecated Shopify APIs and their current replacements
-4. `scoring.md` — how to calculate the score and format the output
+1. `audit-checklist.md` — the complete list of performance, accessibility, and CRO issues to check, organized by severity
+2. `seo-aeo-geo-checklist.md` — SEO, Answer Engine Optimization, and Generative Engine Optimization checks
+3. `liquid-patterns.md` — correct vs incorrect code patterns with examples
+4. `deprecated-apis.md` — deprecated Shopify APIs and their current replacements
+5. `scoring.md` — how to calculate the score and format the output
+
+If the user requests a focused SEO/AEO/GEO audit only, read `seo-aeo-geo-checklist.md` and `scoring.md` first and skip the performance-only sections of `audit-checklist.md`. Otherwise, run the full audit.
 
 ## Audit process — follow these steps exactly
 

@@ -2,7 +2,7 @@
 
 ## How to calculate the score
 
-Start at 100. Deduct points for each issue found.
+Start at 100. Deduct points for each issue found across both checklists (`audit-checklist.md` and `seo-aeo-geo-checklist.md`).
 
 | Severity | Points deducted per issue |
 |---|---|
@@ -12,6 +12,16 @@ Start at 100. Deduct points for each issue found.
 | Low | 1 |
 
 Minimum score is 0. Score cannot go below 0.
+
+## Two scoring modes
+
+Choose mode based on the user's request:
+
+**Full audit (default):** Single score 0–100 covering performance, accessibility, CRO, SEO, AEO, and GEO. Use when the user asks for a "theme audit" without further qualification.
+
+**Split-score mode:** Two scores reported side by side — a Technical & CRO score (from `audit-checklist.md`) and an SEO/AEO/GEO score (from `seo-aeo-geo-checklist.md`). Each starts at 100 and is deducted independently. Use when the user explicitly asks for an SEO audit, AEO audit, GEO audit, or "search visibility" review.
+
+Always state at the top of the report which mode you used.
 
 ## Grade thresholds
 
@@ -70,10 +80,13 @@ After the main findings, provide:
 - INP: [improvement if JavaScript deferred]
 
 **Accessibility:** [X] WCAG AA violations resolved
-**SEO:** [X] structured data improvements
+
+**SEO (classic search):** [X] on-page improvements — title/meta/canonical/hreflang
+**AEO (ChatGPT, Claude, Perplexity citations):** [X] schema and content-structure improvements — FAQ, HowTo, Speakable, factual summaries
+**GEO (AI Overviews, LLM-powered search):** [X] crawlability and trust improvements — Organization schema, AI crawler access, BreadcrumbList
 ```
 
-Note: These are estimates, not guarantees. Actual Lighthouse scores depend on server response time and third-party scripts outside theme control.
+Note: These are estimates, not guarantees. Actual Lighthouse scores depend on server response time and third-party scripts outside theme control. AEO and GEO outcomes also depend on factors outside the theme — domain authority, backlinks, and the AI provider's retrieval choices on any given day.
 
 ## What to audit when you cannot access theme files
 

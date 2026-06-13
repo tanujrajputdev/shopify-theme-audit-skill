@@ -2,6 +2,8 @@
 
 Check every item in this list when auditing a theme. Each item includes what to look for, where to look, and why it matters.
 
+This file covers performance, accessibility, conversion, and core Liquid quality issues. For search-related checks (classic SEO, Answer Engine Optimization for ChatGPT/Claude/Perplexity, Generative Engine Optimization for AI Overviews), see `seo-aeo-geo-checklist.md` — it is part of the same audit and uses the same severity model.
+
 ---
 
 ## CRITICAL SEVERITY — Each deducts 10 points
