@@ -13,13 +13,32 @@ Start at 100. Deduct points for each issue found across both checklists (`audit-
 
 Minimum score is 0. Score cannot go below 0.
 
-## Two scoring modes
+## Audit modes
 
 Choose mode based on the user's request:
 
 **Full audit (default):** Single score 0–100 covering performance, accessibility, CRO, SEO, AEO, and GEO. Use when the user asks for a "theme audit" without further qualification.
 
-**Split-score mode:** Two scores reported side by side — a Technical & CRO score (from `audit-checklist.md`) and an SEO/AEO/GEO score (from `seo-aeo-geo-checklist.md`). Each starts at 100 and is deducted independently. Use when the user explicitly asks for an SEO audit, AEO audit, GEO audit, or "search visibility" review.
+**Split-score mode:** Two scores reported side by side — a Technical & CRO score (from `audit-checklist.md` + `apps-audit.md`) and an SEO/AEO/GEO score (from `seo-aeo-geo-checklist.md`). Each starts at 100 and is deducted independently. Use when the user explicitly asks for an SEO audit, AEO audit, GEO audit, or "search visibility" review.
+
+**Quick-wins mode:** Re-rank the findings by `impact ÷ effort` instead of raw severity. Trigger words: "quick wins", "what should I fix first", "biggest bang for buck", "highest ROI", "Friday afternoon fixes". In this mode, still compute the standard score and present the standard sections, but **lead the report with a Quick-Wins table** before the Critical Issues section:
+
+```
+### Quick Wins — Top 10 by Impact ÷ Effort
+
+| # | Issue | Severity | Est. effort | Est. impact | ROI |
+|---|---|---|---|---|---|
+| 1 | H3 — Add LCP preload to hero image | High | 5 min | LCP -400ms | ★★★★★ |
+| 2 | C6 — Add width/height to header logo | Critical | 5 min | CLS removed above fold | ★★★★★ |
+| 3 | GEO-C1 — Allow GPTBot/ClaudeBot in robots.txt | Critical | 10 min | AI citation eligibility | ★★★★★ |
+| 4 | M4 — Add Product JSON-LD via {{ product \| structured_data }} | Medium | 10 min | Rich snippets unlocked | ★★★★ |
+| 5 | AEO-C1 — Add FAQPage schema to existing FAQ block | Critical | 15 min | AI answer eligibility | ★★★★ |
+| ... |
+```
+
+Effort buckets: 5 min / 15 min / 1 hour / half-day / multi-day. Impact buckets: site-wide vs single-template, blocking vs visual. ROI rating is one to five stars derived from `impact_bucket ÷ effort_bucket`.
+
+After the Quick Wins table, still emit the standard Critical → High → Medium → Low sections in full. Do not omit anything.
 
 Always state at the top of the report which mode you used.
 
@@ -63,6 +82,8 @@ Prioritize fixes by the combination of:
 - Effort (quick fixes before long implementations)
 
 A Critical issue that affects every page and takes 10 minutes to fix ranks above a Critical issue that only affects the product page and requires a full section rewrite.
+
+For Quick-Wins mode specifically, sort strictly by `impact_bucket ÷ effort_bucket` — a 5-minute High beats a half-day Critical. Use this when the merchant is time-boxed (pre-BFCM, pre-launch, agency sprint).
 
 ### Estimated impact section
 

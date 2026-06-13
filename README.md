@@ -1,6 +1,6 @@
 # Shopify Theme Audit Skill for Claude Code
 
-> Drop six files into your Shopify project. Ask Claude Code to audit the theme. Get a scored report covering performance, accessibility, conversion, SEO, AEO (ChatGPT / Claude / Perplexity citations), and GEO (AI Overviews) — with exact file references, line numbers, and working code fixes, in under five minutes.
+> Drop eight files into your Shopify project. Ask Claude Code to audit the theme. Get a scored report covering performance, accessibility, conversion, third-party app overhead, SEO, AEO (ChatGPT / Claude / Perplexity citations), and GEO (AI Overviews) — with exact file references, line numbers, and working code fixes, in under five minutes.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Works with Claude Code](https://img.shields.io/badge/Works%20with-Claude%20Code-orange)](https://claude.ai/code)
@@ -28,6 +28,9 @@ No API calls, no SaaS, no subscription. It runs inside Claude Code using your ex
 
 - **SEO / AEO / GEO audits added.** A dedicated `seo-aeo-geo-checklist.md` covers traditional search, Answer Engine Optimization (ChatGPT, Claude, Perplexity, Gemini citations), and Generative Engine Optimization (Google AI Overviews, Bing Copilot, LLM-powered shopping).
 - **35+ new checks** spanning meta tags, hreflang, FAQ schema, HowTo schema, Speakable, Organization schema, AI crawler accessibility (GPTBot, ClaudeBot, PerplexityBot), llms.txt, factual product summaries, machine-readable specifications, and policy schema.
+- **Third-party app overhead audit** — a new `apps-audit.md` detects and scores 20+ common Shopify apps (Klaviyo, Judge.me, Loox, Yotpo, Rebuy, Gorgias, Recharge, Smile, LoyaltyLion, and more) by loading strategy, bundle size, and above-fold impact. Most stores die from app bloat, not theme bloat — this catches it.
+- **Before / After code gallery** — `before-after.md` provides strict `WRONG → RIGHT` Liquid pairs keyed by check ID. Claude pastes exact working code into the report instead of vague descriptions.
+- **Quick-Wins mode** — say "what should I fix first" or "biggest bang for buck" and the report leads with a ranked Impact ÷ Effort table before the full breakdown.
 - **Split-score mode** — request an SEO-only or AEO-only audit and get two independent scores.
 - Updated to assume **Shopify MCP is live** for live-store reads. No "coming soon" placeholders.
 
@@ -147,7 +150,9 @@ your-shopify-theme/
 ├── CLAUDE.md                       ← copy here
 ├── audit-checklist.md              ← copy here
 ├── seo-aeo-geo-checklist.md        ← copy here
+├── apps-audit.md                   ← copy here
 ├── liquid-patterns.md              ← copy here
+├── before-after.md                 ← copy here
 ├── deprecated-apis.md              ← copy here
 ├── scoring.md                      ← copy here
 ├── layout/
@@ -177,6 +182,20 @@ and work through sections/ and snippets/.
 ```
 Run an SEO, AEO, and GEO audit on this theme using the audit skill.
 Use split-score mode. Skip the performance-only sections.
+```
+
+**Quick wins — what should I fix first:**
+
+```
+Run the audit skill in quick-wins mode. Show me the top 10 fixes ranked by
+impact divided by effort, then the full report.
+```
+
+**Third-party app overhead:**
+
+```
+Audit only third-party app overhead using the audit skill. Use apps-audit.md.
+List every app detected, its loading strategy, and its measurable cost.
 ```
 
 **One specific area:**
@@ -221,17 +240,19 @@ If you already have a `CLAUDE.md` in your project, append this block instead of 
 ## Shopify Theme Audit
 
 When asked to audit this theme — for performance, accessibility, CRO, SEO,
-AEO, or GEO — read the following skill files in order:
+AEO, GEO, or app overhead — read the following skill files in order:
 
 - audit-checklist.md
 - seo-aeo-geo-checklist.md
+- apps-audit.md
 - liquid-patterns.md
+- before-after.md
 - deprecated-apis.md
 - scoring.md
 
 Then follow the audit methodology in those files exactly. Always include
-file names and line numbers for every finding, and always include a working
-Liquid code fix.
+file names and line numbers for every finding, and paste the exact RIGHT
+block from before-after.md as the fix — do not paraphrase.
 ```
 
 ---
@@ -243,10 +264,12 @@ Liquid code fix.
 | `CLAUDE.md` | Master instructions — how Claude Code runs the audit, step by step |
 | `audit-checklist.md` | Performance, accessibility, and CRO checks with severity ratings and locations |
 | `seo-aeo-geo-checklist.md` | SEO, Answer Engine Optimization, and Generative Engine Optimization checks |
+| `apps-audit.md` | Third-party app overhead — Klaviyo, Judge.me, Loox, Yotpo, Rebuy, Gorgias, Recharge, and 15+ more |
 | `liquid-patterns.md` | 15+ before/after code examples: images, metafields, schemas, accessibility, structured data |
+| `before-after.md` | Strict WRONG → RIGHT code gallery keyed by check ID — the exact fixes the audit pastes into reports |
 | `deprecated-apis.md` | Every deprecated Shopify API with exact current replacements |
-| `scoring.md` | 0–100 scoring formula, grade thresholds, single-score and split-score modes, report format |
-| `examples/` | Sample audit reports from real themes |
+| `scoring.md` | 0–100 scoring formula, grade thresholds, full / split-score / quick-wins modes, report format |
+| `examples/` | Three sample audit reports — Dawn custom (C grade), legacy 1.0 (F grade), clean Dawn (A grade) |
 
 ---
 

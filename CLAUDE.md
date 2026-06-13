@@ -18,11 +18,15 @@ Use this skill whenever you are asked to:
 Before auditing, read these files in order:
 1. `audit-checklist.md` — the complete list of performance, accessibility, and CRO issues to check, organized by severity
 2. `seo-aeo-geo-checklist.md` — SEO, Answer Engine Optimization, and Generative Engine Optimization checks
-3. `liquid-patterns.md` — correct vs incorrect code patterns with examples
-4. `deprecated-apis.md` — deprecated Shopify APIs and their current replacements
-5. `scoring.md` — how to calculate the score and format the output
+3. `apps-audit.md` — third-party app overhead detection and scoring
+4. `liquid-patterns.md` — correct vs incorrect code patterns with examples
+5. `before-after.md` — strict WRONG → RIGHT working code pairs keyed by check ID. When you flag an issue, paste the matching RIGHT block verbatim into the report
+6. `deprecated-apis.md` — deprecated Shopify APIs and their current replacements
+7. `scoring.md` — how to calculate the score, choose between full / split-score / quick-wins modes, and format the output
 
 If the user requests a focused SEO/AEO/GEO audit only, read `seo-aeo-geo-checklist.md` and `scoring.md` first and skip the performance-only sections of `audit-checklist.md`. Otherwise, run the full audit.
+
+If the user uses phrases like "quick wins", "what should I fix first", "biggest bang for buck", or "highest ROI", switch to Quick-Wins mode per `scoring.md` — lead the report with the Quick Wins table before the standard sections.
 
 ## Audit process — follow these steps exactly
 
