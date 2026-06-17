@@ -2,6 +2,7 @@
 
 > Drop eight files into your Shopify project. Ask Claude Code to audit the theme. Get a scored report covering performance, accessibility, conversion, third-party app overhead, SEO, AEO (ChatGPT / Claude / Perplexity citations), and GEO (AI Overviews) — with exact file references, line numbers, and working code fixes, in under five minutes.
 
+[![Version](https://img.shields.io/badge/version-2.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Works with Claude Code](https://img.shields.io/badge/Works%20with-Claude%20Code-orange)](https://claude.ai/code)
 [![Shopify](https://img.shields.io/badge/Shopify-Online%20Store%202.0-96BF48)](https://shopify.dev)
@@ -25,6 +26,8 @@ No API calls, no SaaS, no subscription. It runs inside Claude Code using your ex
 ---
 
 ## What changed in this version
+
+> **v2.0** — full version history and the v1.0 → v2.0 comparison are in [CHANGELOG.md](CHANGELOG.md).
 
 - **SEO / AEO / GEO audits added.** A dedicated `seo-aeo-geo-checklist.md` covers traditional search, Answer Engine Optimization (ChatGPT, Claude, Perplexity, Gemini citations), and Generative Engine Optimization (Google AI Overviews, Bing Copilot, LLM-powered shopping).
 - **35+ new checks** spanning meta tags, hreflang, FAQ schema, HowTo schema, Speakable, Organization schema, AI crawler accessibility (GPTBot, ClaudeBot, PerplexityBot), llms.txt, factual product summaries, machine-readable specifications, and policy schema.
