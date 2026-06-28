@@ -1,0 +1,12 @@
+.DS_Store
+*.local
+node_modules/
+
+# Paid v3 lives here — never commit to the public free repo
+v3-premium/
+plus-premium-checklist.md
+scoring-v3.md
+
+# Internal product memory — never publish to the MIT repo
+brain/
+auditskill-brain/
