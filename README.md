@@ -9,6 +9,12 @@
 
 ---
 
+> **🛠️ Want this done for you by the person who built the skill?**
+> Quick Audit ₹4,999 (3 days) · Audit + Fix Sprint ₹74,999 (top 10 fixes shipped to a branch in 14 days) · Quarterly Retainer ₹29,999/mo.
+> **→ [Book here](https://auditskill.tanujrajput.com/#service-tiers)** · branded PDF + Loom walkthrough · refund if I can't surface 10 actionable findings.
+
+---
+
 ## What this is
 
 A **Claude Code skill** — a set of markdown instruction files that teach Claude Code to audit Shopify themes the way a senior Shopify developer does.
