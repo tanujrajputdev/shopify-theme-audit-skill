@@ -129,7 +129,8 @@ The audit went from a single performance + accessibility checklist to a full sea
 A dedicated 35+ check file covering:
 - **SEO** — `<title>`, meta description, canonical, sitemap accessibility, Product JSON-LD, multiple H1s, heading hierarchy, Open Graph, Twitter Cards, descriptive alt text, hreflang, pagination handling, title/description length, URL handle quality, internal linking, robots meta, semantic logo markup
 - **AEO** — FAQ schema, factual product summaries, `PropertyValue` specifications, HowTo schema, Speakable hints, author/publisher (E-E-A-T), `dateModified`, individual Review schema, comparison content
-- **GEO** — AI crawler accessibility (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, CCBot), `llms.txt`, Organization schema with `sameAs`, BreadcrumbList, machine-readable shipping/returns, materials/origin, descriptive image URLs
+- **GEO** — AI crawler accessibility (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, CCBot), ~~`llms.txt`~~, Organization schema with `sameAs`, BreadcrumbList, machine-readable shipping/returns, materials/origin, descriptive image URLs
+  *(Historical record. The crawler list above is the v2.0 error corrected in v2.3 — `GPTBot` and `ClaudeBot` are training crawlers, not retrieval. `llms.txt` was retired in v2.1. See the v2.3 and v2.1 entries above.)*
 
 **2. Third-party app overhead audit (`apps-audit.md`)**
 Detects 20+ Shopify apps in compiled HTML/JS and scores each by loading strategy, bundle size, and above-fold impact:

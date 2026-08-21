@@ -32,7 +32,7 @@ Choose mode based on the user's request:
 
 | # | Issue | Severity | Est. effort | Est. impact | ROI |
 |---|---|---|---|---|---|
-| 1 | R-C1 — Allow OAI-SearchBot in robots.txt | Critical | 5 min | Unblocks ChatGPT Search citation entirely | ★★★★★ |
+| 1 | R-C1 — Allow OAI-SearchBot + Claude-SearchBot in robots.txt | Critical | 5 min | Unblocks ChatGPT and Claude citation entirely | ★★★★★ |
 | 2 | H3 — Add LCP preload to hero image | High | 5 min | LCP -400ms | ★★★★★ |
 | 3 | C6 — Add width/height to header logo | Critical | 5 min | CLS removed above fold | ★★★★★ |
 | 4 | R-C2 — Publish the missing policy/sizing page as real text | Critical | 30 min | Answers site:-scoped fanouts that currently return nothing | ★★★★★ |

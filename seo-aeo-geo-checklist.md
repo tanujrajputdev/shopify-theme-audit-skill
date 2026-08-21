@@ -464,7 +464,7 @@ Sitemap: {{ shop.url }}/sitemap.xml
 
 Earlier versions of this checklist scored a missing `llms.txt` as Critical (−10). That was wrong, and it cost audited stores ten points for the absence of a file that does essentially nothing. What the 2026 data actually shows:
 
-- No major AI provider reads `llms.txt` in production. GPTBot, ClaudeBot, PerplexityBot, `OAI-SearchBot`, and Google-Extended overwhelmingly skip it and crawl HTML directly.
+- No major AI provider reads `llms.txt` in production. `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot`, `GPTBot`, `ClaudeBot`, and `Google-Extended` overwhelmingly skip it and crawl HTML directly.
 - An Ahrefs study of ~137,000 sites found **97% of `llms.txt` files received zero traffic**. One instrumented domain logged 84 requests to `/llms.txt` out of 62,100 total AI-bot visits — **0.1%**.
 - Google's June 2026 documentation update states `llms.txt` has **no effect, positive or negative**, on Search rankings or AI Overviews.
 - Large-scale studies find no relationship between having the file and being cited.
@@ -510,7 +510,7 @@ Earlier versions of this checklist scored a missing `llms.txt` as Critical (−1
 ### GEO-H3 (High): Critical content inside JavaScript-rendered DOM
 **Where to look:** Product details, pricing, reviews
 **Flag if:** Price, description, or reviews are hydrated by JS post-load
-**Why it matters:** Most LLM crawlers (GPTBot, ClaudeBot) do not execute JavaScript. Content rendered after page load is invisible to them.
+**Why it matters:** The retrieval crawlers that gate citations — `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot` — do not execute JavaScript. Content rendered after page load is invisible to them, and therefore uncitable.
 
 ### GEO-H4 (High): Brand description thin or only in image form
 **Where to look:** Homepage, `/pages/about`
