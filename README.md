@@ -2,7 +2,7 @@
 
 > Drop eight files into your Shopify project. Ask Claude Code to audit the theme. Get a scored report covering performance, accessibility, conversion, third-party app overhead, SEO, AEO (ChatGPT / Claude / Perplexity citations), and GEO (AI Overviews) — with exact file references, line numbers, and working code fixes, in under five minutes.
 
-[![Version](https://img.shields.io/badge/version-2.2-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.3-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Works with Claude Code](https://img.shields.io/badge/Works%20with-Claude%20Code-orange)](https://claude.ai/code)
 [![Shopify](https://img.shields.io/badge/Shopify-Online%20Store%202.0-96BF48)](https://shopify.dev)
@@ -32,6 +32,16 @@ No API calls, no SaaS, no subscription. It runs inside Claude Code using your ex
 ---
 
 ## What changed in this version
+
+> **v2.3 (August 2026)** — **correction.** Every major AI provider runs **three** crawlers, not one, and this skill got that wrong twice. v2.0 omitted `OAI-SearchBot`; v2.1 fixed OpenAI then made the identical error on Anthropic, listing `ClaudeBot` (the *training* crawler) as the only Claude bot and filing it under retrieval. `Claude-SearchBot` gates Claude citations; `Claude-User` handles live fetches.
+>
+> | Group | Bots | Blocking costs you |
+> |---|---|---|
+> | Retrieval | `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot` | **Citations** |
+> | User fetch | `ChatGPT-User`, `Claude-User` | Live session fetches |
+> | Training | `GPTBot`, `ClaudeBot`, `CCBot` | Training corpus **only** |
+>
+> **Blocking `GPTBot` does not remove you from ChatGPT's answers.** Blocking `ClaudeBot` does not remove you from Claude's. **If you applied the robots.txt fix from v2.0 or v2.1, re-check it.**
 
 > **v2.2 (August 2026)** — four new checks, each anchored to a published limit rather than a rule of thumb:
 >
@@ -148,7 +158,7 @@ GEO visibility: allowing AI crawlers + Organization schema unlocks brand-disambi
 | **AEO Critical (AEO-C1, AEO-C2)** | FAQ schema missing, product pages opening with marketing fluff instead of factual definitions |
 | **AEO High (AEO-H1, AEO-H2, AEO-H4)** | Specs not structured as `PropertyValue`, no HowTo schema, no author/publisher (E-E-A-T) signals |
 | **AEO Medium (AEO-M1 → AEO-M3)** | Missing `dateModified`, no individual `Review` schema, no comparison content |
-| **Retrieval Critical (R-C1 → R-C3)** | Retrieval crawler (`OAI-SearchBot`) blocked, no on-domain page to answer a `site:`-scoped query, AI visibility dependent on off-domain UGC |
+| **Retrieval Critical (R-C1 → R-C3)** | Retrieval crawler (`OAI-SearchBot`, `Claude-SearchBot`) blocked, no on-domain page to answer a `site:`-scoped query, AI visibility dependent on off-domain UGC |
 | **GEO Critical (GEO-C1)** | AI crawlers blocked in robots.txt — training vs retrieval bots distinguished |
 | **GEO High (GEO-H1 → GEO-H4)** | Organization schema absent, BreadcrumbList missing, critical content JS-rendered, thin brand description |
 | **GEO Medium (GEO-M1 → GEO-M3)** | No shipping/returns schema in offers, no machine-readable materials/origin, undescriptive image URLs |

@@ -209,21 +209,41 @@ Some items here are **store-level, not theme-level**. Flag them anyway, and labe
 
 ### R-C1 (Critical): Retrieval crawler blocked or not explicitly allowed
 **Where to look:** `templates/robots.txt.liquid` (if customized)
-**What to find:** `OAI-SearchBot` explicitly allowed
-**Flag if:** `OAI-SearchBot` is disallowed, or the robots file allows `GPTBot` while omitting `OAI-SearchBot`
+**What to find:** `OAI-SearchBot` **and** `Claude-SearchBot` explicitly allowed
+**Flag if:** Either retrieval bot is disallowed or absent — including the common case of a file that lists `GPTBot` and `ClaudeBot` (both training crawlers) and neither search crawler
 **Why it matters:** These are different bots with different jobs, and conflating them is the most common AEO mistake in the wild:
+
+Each major provider runs **three separate crawlers** with three different jobs. Blocking one does not block the others. Treating a provider as having a single bot is the single most common AEO mistake, and it fails in both directions — blocking citations while intending to block training, or the reverse.
 
 | Bot | Operator | Job | Blocking it costs you |
 |---|---|---|---|
+| **Retrieval — these gate citations** | | | |
 | `OAI-SearchBot` | OpenAI | Builds/refreshes the **search** index behind ChatGPT Search citations | **ChatGPT Search visibility** |
-| `GPTBot` | OpenAI | Crawls for **model training** | Training-corpus inclusion only |
-| `ChatGPT-User` | OpenAI | Fetches a page when a **user** action requires it live | Live user-initiated fetches |
-| `ClaudeBot` | Anthropic | Crawl for Claude | Claude visibility |
-| `PerplexityBot` | Perplexity | Perplexity index | Perplexity citations |
-| `Google-Extended` | Google | Gemini / AI Overviews grounding | AI Overview eligibility |
+| `Claude-SearchBot` | Anthropic | Indexes content for **Claude's search results** | **Claude search citations** |
+| `PerplexityBot` | Perplexity | Perplexity's search index | **Perplexity citations** |
+| **User-initiated fetch** | | | |
+| `ChatGPT-User` | OpenAI | Fetches a page when a ChatGPT **user** action requires it live | Live fetches during a user's session |
+| `Claude-User` | Anthropic | Fetches a page when a Claude **user** asks about it | Live fetches during a user's session |
+| **Training — separate decision** | | | |
+| `GPTBot` | OpenAI | Crawls for **model training** | Training-corpus inclusion **only** |
+| `ClaudeBot` | Anthropic | Crawls for **model training** | Training-corpus inclusion **only** |
+| `CCBot` | Common Crawl | Open crawl corpus used by many trainers | Training-corpus inclusion |
+| **Dual-purpose** | | | |
+| `Google-Extended` | Google | Gemini training **and** grounding in AI Overviews / AI Mode | Both training and AI Overview eligibility |
 
-A store that allows `GPTBot` but blocks `OAI-SearchBot` has opted **into** training and **out of** citations — the exact inverse of what almost every merchant wants. Since the August 8 shift, this bot gates a larger share of retrieval than before: site:-scoped fanouts have to actually fetch from your domain.
-**Severity note:** This supersedes the old `GEO-C1`, which omitted `OAI-SearchBot` entirely. See `GEO-C1` below for the corrected allow-block.
+**Read the table by column, not by vendor.** The two mistakes it prevents:
+
+1. **Allowing `GPTBot` while blocking `OAI-SearchBot`** opts a store **into** training and **out of** citations — the exact inverse of what almost every merchant wants.
+2. **Allowing or blocking `ClaudeBot` alone** and assuming it settles Anthropic. It does not. `ClaudeBot` is the **training** crawler. Blocking it has **no effect on Claude citations** — that is `Claude-SearchBot`. This is the mirror image of mistake 1, and it is just as common.
+
+**Do not tell a merchant that blocking `GPTBot` removes them from ChatGPT's answers.** It does not. `GPTBot` is training-only; answer visibility is gated by `OAI-SearchBot` and `ChatGPT-User`. The same correction applies to `ClaudeBot` and Claude.
+
+**One asymmetry worth knowing:** Anthropic states that **all three** of its crawlers honour robots.txt, **including `Claude-User`**. OpenAI and Perplexity draw a sharper line on user-initiated fetchers — robots.txt **may not apply** to `ChatGPT-User`, and generally does not apply to `Perplexity-User`. So a robots.txt block on `Claude-User` is reliable in a way the same block on `ChatGPT-User` is not. Do not promise a merchant that they can robots.txt their way out of user-initiated fetches on every platform.
+
+**Legacy agents:** `Claude-Web` and `anthropic-ai` are deprecated. Harmless to leave in a robots.txt, but they are not a substitute for `Claude-SearchBot` — a file listing only those is functionally missing Anthropic's retrieval bot.
+
+Since the August 8 shift, retrieval bots gate more than before: site:-scoped fanouts have to actually fetch from your domain.
+**Severity note:** This supersedes the old `GEO-C1`, which omitted `OAI-SearchBot` and treated `ClaudeBot` as Anthropic's only crawler. See `GEO-C1` below for the corrected allow-block.
 
 ### R-C2 (Critical): Domain cannot answer its own site:-scoped questions
 **Where to look:** `templates/`, `pages/`, store navigation — the set of pages that exist at all
@@ -390,7 +410,12 @@ GEO is about being included when an LLM-powered surface (Google AI Overviews, Bi
 **Flag if:** AI crawlers are disallowed without the merchant having made a deliberate choice to opt out — **or** if the file allows `GPTBot` but omits `OAI-SearchBot` (see `R-C1` for why these are not the same thing)
 **Why it matters:** Many themes carry over copy-pasted robots.txt blocks from 2023 SEO advice that fully blocked AI crawlers. If the merchant *wants* GEO visibility, these must be removed.
 
-> **Corrected in v2.1.** Earlier versions of this checklist recommended an allow-block that omitted `OAI-SearchBot`. That block opts a store into model training while leaving it out of ChatGPT Search citations. If you previously applied this skill's robots.txt recommendation, re-check the file against the block below.
+> **Corrected in v2.1, corrected again in v2.3.** Two rounds of the same mistake, stated plainly:
+>
+> - **v2.0** recommended an allow-block that omitted `OAI-SearchBot`, opting stores into training and out of ChatGPT Search citations.
+> - **v2.1** fixed OpenAI but repeated the identical error on Anthropic — it listed `ClaudeBot` as Anthropic's single crawler and placed it in the *retrieval* group. `ClaudeBot` is the **training** crawler. `Claude-SearchBot` (citations) and `Claude-User` (user fetches) were missing entirely.
+>
+> **If you applied either version's robots.txt recommendation, re-check the file against the block below.**
 
 **Default recommendation (allow):**
 ```
@@ -399,29 +424,39 @@ GEO is about being included when an LLM-powered surface (Google AI Overviews, Bi
   {{ group | newline_to_br | strip_html }}
 {%- endfor -%}
 
-# Retrieval — gates whether you can be CITED
+# --- RETRIEVAL: gates whether you can be CITED ---
 User-agent: OAI-SearchBot
 Allow: /
 
-User-agent: ChatGPT-User
+User-agent: Claude-SearchBot
 Allow: /
 
 User-agent: PerplexityBot
 Allow: /
 
+# --- USER-INITIATED FETCH ---
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+# --- DUAL: Gemini training AND AI Overviews grounding ---
 User-agent: Google-Extended
+Allow: /
+
+# --- TRAINING: separate decision, safe to omit to opt out of training ---
+User-agent: GPTBot
 Allow: /
 
 User-agent: ClaudeBot
 Allow: /
 
-# Training — separate decision; safe to omit if the merchant opts out of training
-User-agent: GPTBot
-Allow: /
-
 Sitemap: {{ shop.url }}/sitemap.xml
 ```
-**Note on merchant intent:** Allowing retrieval bots while disallowing `GPTBot` is a coherent, defensible position — cited but not trained on. Do not flag that combination as an error. The incoherent combination is the reverse.
+**Note on merchant intent:** Allowing the retrieval bots while disallowing `GPTBot` **and** `ClaudeBot` is a coherent, defensible position — cited but not trained on. Do not flag that combination as an error; it is a deliberate and increasingly common choice. The incoherent combination is the reverse: training allowed, citations blocked.
+
+**When you report this, name the specific bot.** "Blocked from AI crawlers" is not an actionable finding and is usually wrong in detail. "Blocks `Claude-SearchBot`, so the store cannot be cited in Claude's search results — `ClaudeBot` is separately blocked, which only affects training" is.
 
 ### GEO-L3 (Low): No `llms.txt` — *demoted from Critical in v2.1; do not deduct 10 points for this*
 **Where to look:** `templates/page.llms.liquid`, or a static `llms.txt` served from the domain
@@ -535,7 +570,7 @@ Note when any of the following is correctly implemented:
 - BreadcrumbList schema matching visible breadcrumb UI
 - Hreflang tags on multi-region stores
 - Open Graph and Twitter Card tags on every template
-- **Retrieval crawlers allowed in robots.txt — specifically `OAI-SearchBot`, not just `GPTBot`**
+- **Retrieval crawlers allowed in robots.txt — specifically `OAI-SearchBot` and `Claude-SearchBot`, not just the training crawlers `GPTBot` and `ClaudeBot`**
 - **A dedicated on-domain page exists for shipping, returns, sizing, and materials (satisfies site:-scoped fanouts)**
 - **Reviews and specs rendered server-side into HTML rather than injected by a third-party widget**
 - `dateModified` on article schema and visible "last updated" in UI

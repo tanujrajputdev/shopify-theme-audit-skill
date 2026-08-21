@@ -37,7 +37,7 @@ If the user requests a focused SEO/AEO/GEO audit only, read `seo-aeo-geo-checkli
 - Always report `R-` findings before `AEO-` / `GEO-` findings, and never recommend schema work while an `R-C1` (blocked retrieval crawler) is open.
 
 **Two corrections to earlier versions of this skill — apply them:**
-1. `OAI-SearchBot` is the crawler behind ChatGPT Search citations. `GPTBot` is training-only. Versions before v2.1 recommended a robots.txt block that allowed `GPTBot` and omitted `OAI-SearchBot`, which opts a store into training and out of citations. If you see that block in a theme, flag it.
+1. **Every major provider runs three crawlers, not one.** Retrieval (`OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot`) gates citations. User-initiated fetch (`ChatGPT-User`, `Claude-User`) serves live sessions. Training (`GPTBot`, `ClaudeBot`, `CCBot`) is a separate decision that does **not** affect search visibility. Blocking `GPTBot` does not remove a store from ChatGPT's answers; blocking `ClaudeBot` does not remove it from Claude's. Versions before v2.1 omitted `OAI-SearchBot`; v2.1 then repeated the same error on Anthropic by treating `ClaudeBot` as the only Claude crawler and filing it under retrieval. Flag either shape when you see it, and never report a finding as "blocked from AI crawlers" — name the bot and say what it gates.
 2. `llms.txt` is **not** a Critical issue and its absence should not be flagged. The 2026 evidence shows AI crawlers do not fetch it (97% of files get zero traffic; Google states it has no effect). Earlier versions scored this at −10.
 
 ### Handling the Reddit citation story
@@ -155,3 +155,8 @@ Fix:
 - Do not claim FAQ schema is "the highest-leverage AEO signal" — it is a tie-breaker downstream of retrieval
 - Do not assert that the August 8 fanout change caused the August 14 Reddit citation drop — that link is unconfirmed
 - Do not promise citation outcomes. Audits deliver *eligibility*, not placement — AI providers change retrieval overnight without notice
+- Do not treat `ClaudeBot` as Anthropic's only crawler, or `GPTBot` as OpenAI's. Each provider runs three
+- Do not claim blocking a training crawler (`GPTBot`, `ClaudeBot`) affects citation visibility — it does not
+- Do not promise robots.txt reliably blocks user-initiated fetchers. Anthropic honours it for `Claude-User`; robots.txt may not apply to `ChatGPT-User` or `Perplexity-User`
+- Do not cite a 128KB payload limit for web pixels — no such limit is published (see `APP-H7`)
+- Do not present a self-chosen threshold as a platform limit. Cite the published limit, or say the number is this audit's judgement

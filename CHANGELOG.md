@@ -4,7 +4,43 @@ This file documents what changed between versions and how much more the current 
 
 ---
 
-## v2.2 — August 2026 (current)
+## v2.3 — August 2026 (current)
+
+**Correcting the same mistake twice: every AI provider runs three crawlers, not one.**
+
+v2.1 fixed this on OpenAI and then made the identical error on Anthropic. Both are now corrected.
+
+### What was wrong
+
+**v2.0** recommended a robots.txt allow-block listing `GPTBot` and omitting `OAI-SearchBot`. `GPTBot` is OpenAI's *training* crawler; `OAI-SearchBot` builds the index behind ChatGPT Search citations. Stores that applied it opted **into** training and **out of** citations.
+
+**v2.1** fixed OpenAI — and then repeated the mistake on Anthropic. It listed `ClaudeBot` as Anthropic's single crawler and placed it in the **retrieval** group. `ClaudeBot` is the **training** crawler. `Claude-SearchBot` (which gates Claude citations) and `Claude-User` (live user fetches) were missing entirely. Anthropic documented the three-crawler split in February 2026.
+
+**The false claim both versions implied:** that blocking `GPTBot` removes a store from ChatGPT's answers. It does not. Blocking a training crawler has no effect on search visibility on either platform. Anything stating otherwise is wrong.
+
+### The corrected model
+
+| Group | Bots | What blocking costs |
+|---|---|---|
+| **Retrieval** | `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot` | **Citations** |
+| **User-initiated fetch** | `ChatGPT-User`, `Claude-User` | Live fetches in a user's session |
+| **Training** | `GPTBot`, `ClaudeBot`, `CCBot` | Training-corpus inclusion **only** |
+| **Dual** | `Google-Extended` | Gemini training **and** AI Overviews grounding |
+
+### Also corrected
+
+- **The two platforms are not symmetric on user-initiated fetches.** Anthropic states all three of its crawlers honour robots.txt, **including `Claude-User`**. robots.txt **may not apply** to `ChatGPT-User`, and generally does not to `Perplexity-User`. Do not promise a merchant they can robots.txt their way out of user-initiated fetches everywhere.
+- **`Claude-Web` and `anthropic-ai` are deprecated.** Harmless to leave in a file; not a substitute for `Claude-SearchBot`.
+- **Reporting rule:** "blocked from AI crawlers" is not an actionable finding and is usually wrong in detail. Name the bot and say what it gates.
+- `CLAUDE.md` gains the v2.2 rules it never received — the web-pixel non-limit and the cite-the-limit-or-label-it rule.
+
+**If you applied the robots.txt recommendation from v2.0 *or* v2.1, re-check `templates/robots.txt.liquid` against the corrected block in `GEO-C1`.**
+
+*Credit: the Anthropic error was caught by the skill's author on review, not by the tool.*
+
+---
+
+## v2.2 — August 2026
 
 **Four new checks, each anchored to a published limit rather than a rule of thumb.**
 

@@ -734,41 +734,54 @@ Disallow: /
   {% endif %}
 {% endfor %}
 
-# --- RETRIEVAL BOTS: these gate whether the store can be CITED ---
+# --- RETRIEVAL: these gate whether the store can be CITED ---
 
 User-agent: OAI-SearchBot
 Allow: /
 
-User-agent: ChatGPT-User
+User-agent: Claude-SearchBot
 Allow: /
 
 User-agent: PerplexityBot
 Allow: /
 
+# --- USER-INITIATED FETCH ---
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+# --- DUAL: Gemini training AND AI Overviews grounding ---
+
 User-agent: Google-Extended
 Allow: /
 
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Claude-Web
-Allow: /
-
-# --- TRAINING BOTS: separate decision, safe to omit if opting out of training ---
+# --- TRAINING: separate decision, omit these to opt out of training ---
 
 User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
 Allow: /
 
 User-agent: CCBot
 Allow: /
 ```
 
-> **Corrected in v2.1 — check your theme if you applied the earlier version of this block.**
-> The v2.0 RIGHT block allowed `GPTBot` but omitted `OAI-SearchBot`. Those are different crawlers with different jobs: `GPTBot` collects **training** data, while `OAI-SearchBot` builds the index behind **ChatGPT Search citations**. A store running the old block opted into training and out of citations — the inverse of what merchants almost always want.
+> **Corrected twice — check your theme if you applied either earlier block.**
 >
-> This matters more since ChatGPT Search began issuing `site:`-scoped fanout queries at scale on August 8, 2026 (0.37% → 16.8% of all fanouts in a single day). Those scoped searches have to reach your domain to return anything.
+> - **v2.0** allowed `GPTBot` and omitted `OAI-SearchBot`. `GPTBot` collects **training** data; `OAI-SearchBot` builds the index behind **ChatGPT Search citations**. Stores running it opted into training and out of citations.
+> - **v2.1** fixed OpenAI and then made the identical mistake on Anthropic — it listed `ClaudeBot` under *retrieval*. `ClaudeBot` is Anthropic's **training** crawler. The retrieval bot is `Claude-SearchBot`, and `Claude-User` handles live user fetches. Both were missing.
 >
-> Allowing the retrieval bots while disallowing `GPTBot` is a coherent position — cited but not trained on. Do not flag that combination. The incoherent one is the reverse.
+> **Each provider runs three crawlers, not one.** Blocking the training crawler does not affect search visibility on either platform. Do not tell a merchant that blocking `GPTBot` or `ClaudeBot` removes them from that assistant's answers — it does not.
+>
+> `Claude-Web` and `anthropic-ai` are deprecated. Leaving them in is harmless; relying on them instead of `Claude-SearchBot` is not.
+>
+> One asymmetry: Anthropic states all three of its bots honour robots.txt, **including `Claude-User`**. robots.txt **may not apply** to `ChatGPT-User`, and generally does not to `Perplexity-User`.
+>
+> Allowing retrieval while disallowing `GPTBot` and `ClaudeBot` is a coherent position — cited but not trained on. Do not flag it. The incoherent one is the reverse.
 
 ---
 
