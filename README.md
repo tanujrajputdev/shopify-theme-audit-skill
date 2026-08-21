@@ -33,6 +33,17 @@ No API calls, no SaaS, no subscription. It runs inside Claude Code using your ex
 
 ## What changed in this version
 
+> **v2.2 (August 2026)** — four new checks, each anchored to a published limit rather than a rule of thumb:
+>
+> | Check | The limit behind it |
+> |---|---|
+> | `APP-C5` Page builder script weight | Shopify: an app **must not reduce storefront Lighthouse by >10 points** to be listed |
+> | `APP-C6` Accessibility overlay detection | **FTC $1M order** barring WCAG-compliance claims; WebAIM: **67%** of screen reader users rate overlays "not effective" |
+> | `C7` JSON metafield size | **128KB** cap on `json` metafields, API **2026-04**+ (breaking change) |
+> | `APP-H7` Web pixel sprawl | Built for Shopify: **LCP 2.5s / CLS 0.1 / INP 200ms**, 10-point Lighthouse |
+>
+> One correction worth stating: `APP-H7` was scoped against "the 128KB web pixel ceiling." **No such ceiling is published.** Shopify's two 128KB figures are the `json` metafield cap and the Functions input limit. The check is built on what *is* documented — strict vs lax sandbox, duplicate-destination detection — and its one heuristic threshold is labelled as ours, not Shopify's.
+
 > **v2.1 (August 2026)** — rebuilt around the retrieval layer after ChatGPT Search's August 8 `site:` fanout shift, plus two corrections to v2.0: the recommended robots.txt block omitted `OAI-SearchBot` (the crawler behind ChatGPT Search citations), and `llms.txt` was scored Critical despite evidence that AI crawlers do not fetch it. **If you applied v2.0's robots.txt fix, re-check it** — details in [CHANGELOG.md](CHANGELOG.md).
 
 - **SEO / AEO / GEO audits added.** A dedicated `seo-aeo-geo-checklist.md` covers traditional search, Answer Engine Optimization (ChatGPT, Claude, Perplexity, Gemini citations), and Generative Engine Optimization (Google AI Overviews, Bing Copilot, LLM-powered shopping).
@@ -57,9 +68,9 @@ This skill audits all three.
 
 ---
 
-## Real output example
+## Example output
 
-An actual report this skill produced on a live Shopify theme:
+Representative of a report this skill produces on a live Shopify theme (abridged, check IDs current as of v2.2):
 
 ```
 Theme: Bloom (Dawn-based, Online Store 2.0)
@@ -122,7 +133,7 @@ GEO visibility: allowing AI crawlers + Organization schema unlocks brand-disambi
 
 | Severity | Checks | Points each |
 |---|---|---|
-| Critical | C1–C6: render-blocking scripts, deprecated `img_url`, no lazy loading, N+1 queries, missing skip link, missing image dimensions | −10 |
+| Critical | C1–C7: render-blocking scripts, deprecated `img_url`, no lazy loading, N+1 queries, missing skip link, missing image dimensions, `json` metafield over the 2026-04 128KB cap | −10 |
 | High | H1–H7: JS without `defer`, no WebP, no hero preload, oversized global CSS, no focus trap, canonical issues, heavy app blocks | −5 |
 | Medium | M1–M7: repeated Liquid expressions, missing alt text, inline styles, no product structured data, no breadcrumbs, poor zero-results state, unbranded password page | −2 |
 | Low | L1–L6: `console.log` in prod, commented-out code, unminified assets, no CSS custom properties, bare 404 page, footer without trust elements | −1 |
@@ -141,6 +152,17 @@ GEO visibility: allowing AI crawlers + Organization schema unlocks brand-disambi
 | **GEO Critical (GEO-C1)** | AI crawlers blocked in robots.txt — training vs retrieval bots distinguished |
 | **GEO High (GEO-H1 → GEO-H4)** | Organization schema absent, BreadcrumbList missing, critical content JS-rendered, thin brand description |
 | **GEO Medium (GEO-M1 → GEO-M3)** | No shipping/returns schema in offers, no machine-readable materials/origin, undescriptive image URLs |
+
+### Third-party app overhead — `apps-audit.md`
+
+| Severity | Checks | Points each |
+|---|---|---|
+| Critical | APP-C1–C6: sync script in `<head>`, chat widget above the fold on mobile, popup on every page, 6+ app origins, **page builder over Shopify's 10-point Lighthouse limit**, **accessibility overlay installed** | −10 |
+| High | APP-H1–H7: empty review container above fold, duplicate review apps, loyalty widget for logged-out users, sync recommendation calls, search app replacing collection, subscription app hijacking add-to-cart, **web pixel sprawl / oversized custom pixels** | −5 |
+| Medium | APP-M1–M4: session recording on all sessions, double analytics, global CSS for one section, video player with no video | −2 |
+| Low | APP-L1–L3: redundant app fonts, dead app remnants, slow anti-flicker snippet | −1 |
+
+Detection works from rendered HTML alone — the file carries grep signatures for 35+ apps including six page builders and four accessibility overlay vendors.
 
 It also generates a **"What This Theme Does Well"** section so the report is credible — not just a list of problems.
 
