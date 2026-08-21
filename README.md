@@ -2,7 +2,7 @@
 
 > Drop eight files into your Shopify project. Ask Claude Code to audit the theme. Get a scored report covering performance, accessibility, conversion, third-party app overhead, SEO, AEO (ChatGPT / Claude / Perplexity citations), and GEO (AI Overviews) — with exact file references, line numbers, and working code fixes, in under five minutes.
 
-[![Version](https://img.shields.io/badge/version-2.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.1-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Works with Claude Code](https://img.shields.io/badge/Works%20with-Claude%20Code-orange)](https://claude.ai/code)
 [![Shopify](https://img.shields.io/badge/Shopify-Online%20Store%202.0-96BF48)](https://shopify.dev)
@@ -33,10 +33,10 @@ No API calls, no SaaS, no subscription. It runs inside Claude Code using your ex
 
 ## What changed in this version
 
-> **v2.0** — full version history and the v1.0 → v2.0 comparison are in [CHANGELOG.md](CHANGELOG.md).
+> **v2.1 (August 2026)** — rebuilt around the retrieval layer after ChatGPT Search's August 8 `site:` fanout shift, plus two corrections to v2.0: the recommended robots.txt block omitted `OAI-SearchBot` (the crawler behind ChatGPT Search citations), and `llms.txt` was scored Critical despite evidence that AI crawlers do not fetch it. **If you applied v2.0's robots.txt fix, re-check it** — details in [CHANGELOG.md](CHANGELOG.md).
 
 - **SEO / AEO / GEO audits added.** A dedicated `seo-aeo-geo-checklist.md` covers traditional search, Answer Engine Optimization (ChatGPT, Claude, Perplexity, Gemini citations), and Generative Engine Optimization (Google AI Overviews, Bing Copilot, LLM-powered shopping).
-- **35+ new checks** spanning meta tags, hreflang, FAQ schema, HowTo schema, Speakable, Organization schema, AI crawler accessibility (GPTBot, ClaudeBot, PerplexityBot), llms.txt, factual product summaries, machine-readable specifications, and policy schema.
+- **40+ checks** spanning meta tags, hreflang, FAQ schema, HowTo schema, Organization schema, retrieval-crawler accessibility (`OAI-SearchBot`, `ClaudeBot`, `PerplexityBot`, `Google-Extended`), on-domain answer coverage for `site:`-scoped fanouts, first-party vs off-domain content risk, factual product summaries, machine-readable specifications, and policy schema.
 - **Third-party app overhead audit** — a new `apps-audit.md` detects and scores 20+ common Shopify apps (Klaviyo, Judge.me, Loox, Yotpo, Rebuy, Gorgias, Recharge, Smile, LoyaltyLion, and more) by loading strategy, bundle size, and above-fold impact. Most stores die from app bloat, not theme bloat — this catches it.
 - **Before / After code gallery** — `before-after.md` provides strict `WRONG → RIGHT` Liquid pairs keyed by check ID. Claude pastes exact working code into the report instead of vague descriptions.
 - **Quick-Wins mode** — say "what should I fix first" or "biggest bang for buck" and the report leads with a ranked Impact ÷ Effort table before the full breakdown.
@@ -83,7 +83,8 @@ Critical Issues — SEO / AEO / GEO (3)
 
 S-C2: Meta description missing on collection pages — layout/theme.liquid:34
 AEO-C1: FAQ accordion present but no FAQPage schema — sections/faq.liquid:1-80
-GEO-C1: robots.txt.liquid blocks GPTBot, ClaudeBot, PerplexityBot — templates/robots.txt.liquid:12-18
+R-C1:   robots.txt.liquid blocks OAI-SearchBot — no ChatGPT Search citations — templates/robots.txt.liquid:12-18
+R-C2:   No sizing or materials page — site:-scoped fanouts return nothing
 
 High Priority (5)
 H3: No preload hint for LCP hero image — LCP +300–800ms on mobile
@@ -107,7 +108,7 @@ Estimated Impact After Fixes
 Lighthouse Performance: +8 to +15 points
 LCP: -400 to -800ms
 CLS: substantial reduction
-AEO citations: meaningful uplift — FAQ schema + factual summaries are highest leverage
+AEO eligibility: retrieval unblocked + on-domain answer coverage closed (not a citation guarantee)
 GEO visibility: allowing AI crawlers + Organization schema unlocks brand-disambiguation in LLM answers
 ```
 
@@ -134,9 +135,10 @@ GEO visibility: allowing AI crawlers + Organization schema unlocks brand-disambi
 | **SEO High (S-H1 → S-H7)** | Multiple H1s, heading hierarchy, Open Graph, Twitter Card, descriptive alt text, hreflang, pagination handling |
 | **SEO Medium (S-M1 → S-M6)** | Title/description length, URL handle quality, internal linking from product pages, robots meta on non-indexable pages, semantic logo markup |
 | **AEO Critical (AEO-C1, AEO-C2)** | FAQ schema missing, product pages opening with marketing fluff instead of factual definitions |
-| **AEO High (AEO-H1 → AEO-H4)** | Specs not structured as `PropertyValue`, no HowTo schema, no Speakable hints, no author/publisher (E-E-A-T) signals |
+| **AEO High (AEO-H1, AEO-H2, AEO-H4)** | Specs not structured as `PropertyValue`, no HowTo schema, no author/publisher (E-E-A-T) signals |
 | **AEO Medium (AEO-M1 → AEO-M3)** | Missing `dateModified`, no individual `Review` schema, no comparison content |
-| **GEO Critical (GEO-C1, GEO-C2)** | AI crawlers blocked in robots.txt, no `llms.txt` overview |
+| **Retrieval Critical (R-C1 → R-C3)** | Retrieval crawler (`OAI-SearchBot`) blocked, no on-domain page to answer a `site:`-scoped query, AI visibility dependent on off-domain UGC |
+| **GEO Critical (GEO-C1)** | AI crawlers blocked in robots.txt — training vs retrieval bots distinguished |
 | **GEO High (GEO-H1 → GEO-H4)** | Organization schema absent, BreadcrumbList missing, critical content JS-rendered, thin brand description |
 | **GEO Medium (GEO-M1 → GEO-M3)** | No shipping/returns schema in offers, no machine-readable materials/origin, undescriptive image URLs |
 

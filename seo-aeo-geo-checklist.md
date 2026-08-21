@@ -14,7 +14,45 @@ Search has split into three layers:
 2. **AEO** — ChatGPT, Claude, Perplexity, Gemini direct answers. A growing share of product research now happens here. The user never sees a results page.
 3. **GEO** — AI Overviews on Google, Bing Copilot, and LLM-powered shopping assistants. The store either gets cited or it does not exist to the buyer.
 
-A theme that ignores AEO and GEO will lose visibility to competitors whose pages are structured in ways that LLMs can quote.
+**Above all three sits retrieval.** An answer engine can only cite a page it retrieved, and it can only retrieve a page that sits in an index it queries and is reachable by the bot that fetches it. Schema, headings, and quotable copy are *tie-breakers among candidates that were already retrieved* — they do nothing for a page that was never a candidate in the first place.
+
+Audit in that order: retrieval eligibility (`R-` checks) first, then page-level quotability (`AEO-` / `GEO-`). A theme with flawless FAQ schema behind a blocked retrieval crawler scores well on the old checklist and is invisible in practice.
+
+---
+
+## What changed in August 2026 — read this before running an AEO audit
+
+Two measured changes to ChatGPT Search landed in one week, and they move where the leverage sits.
+
+### 1. ChatGPT started using the `site:` operator at scale (August 8, 2026)
+
+Fanout queries — the background searches ChatGPT runs while composing an answer — scoped to a single domain via `site:` jumped from **0.37% to 16.8%** of all fanout queries in a single day, roughly a 46× increase. At the same time, fanouts per response nearly doubled, from **~1.08 to ~1.83**. The site:-scoped searches are *additive*, layered on top of the generic ones rather than replacing them.
+
+Mechanically: ChatGPT increasingly decides *which domain* is likely to hold the answer, then searches inside that domain for it. Retrieval now has a two-stage shape — entity selection, then on-domain lookup.
+
+For a Shopify store that shifts the target in three concrete ways:
+
+- **Entity recognition precedes page optimization.** If the model never thinks to run `site:yourstore.com`, no amount of schema on the page matters.
+- **The answer must live on your own domain and be findable there.** A `site:yourstore.com return policy` fanout that finds nothing is a silent loss — no error, no fallback, just no citation.
+- **Domain coverage breadth now outranks single-page polish.** A missing sizing page, materials page, or shipping page is a directly exploitable gap in a way it was not when retrieval was open-web only.
+
+### 2. Reddit's ChatGPT citation share collapsed (August 14, 2026)
+
+Reddit held a steady **3.83%** share of ChatGPT Search citations from July 18 through August 7, then averaged **0.52%** across August 14–17 — an **86.4%** relative drop.
+
+**Treat the cause as unresolved.** It is tempting to pin this on the August 8 `site:` change, and that link is widely repeated, but the evidence does not support it cleanly:
+
+- The decline came in two phases — a modest dip around August 8, then the sharp collapse on August 14, six days later. The `site:` change does not account for the second, larger drop.
+- Promptwatch, the source of the measurement, states it cannot yet rule out a data-collection issue on its own end.
+- OpenAI has not commented.
+- There is precedent for a measurement artifact: a similar Reddit citation collapse in September 2025 was plausibly attributed to Google removing the `num=100` parameter — a change in the *measurement tooling's* visibility, not in the answer engine's behavior.
+- Google's AI Overviews and AI Mode show a slower, far shallower Reddit decline, so whatever happened is OpenAI-specific rather than an industry-wide devaluation of forum content.
+
+**Do not audit against "Reddit is dead."** That claim may not survive revision, and a checklist built on it would be wrong twice. Audit against the durable lesson underneath it, which holds either way:
+
+> A store whose AI visibility depends on third-party UGC it does not control is exposed to overnight, unannounced, unexplained platform changes.
+
+The hedge is first-party content on an owned domain — which is also precisely what the `site:` fanout change rewards. Both August events point the same direction even though only one of them has a confirmed mechanism. That convergence is why the `R-` checks below are worth running regardless of how the Reddit story resolves.
 
 ---
 
@@ -163,6 +201,71 @@ A theme that ignores AEO and GEO will lose visibility to competitors whose pages
 
 ---
 
+## RETRIEVAL — ELIGIBILITY TO BE CITED AT ALL
+
+Run this tier first. Every AEO and GEO check below is a tie-breaker among pages that were already retrieved; these checks decide whether the page is a candidate.
+
+Some items here are **store-level, not theme-level**. Flag them anyway, and label them `[merchant action]` in the report so the merchant knows it is not a code fix. An audit that stays silent about a blocking store-level problem because it is out of theme scope is not doing its job.
+
+### R-C1 (Critical): Retrieval crawler blocked or not explicitly allowed
+**Where to look:** `templates/robots.txt.liquid` (if customized)
+**What to find:** `OAI-SearchBot` explicitly allowed
+**Flag if:** `OAI-SearchBot` is disallowed, or the robots file allows `GPTBot` while omitting `OAI-SearchBot`
+**Why it matters:** These are different bots with different jobs, and conflating them is the most common AEO mistake in the wild:
+
+| Bot | Operator | Job | Blocking it costs you |
+|---|---|---|---|
+| `OAI-SearchBot` | OpenAI | Builds/refreshes the **search** index behind ChatGPT Search citations | **ChatGPT Search visibility** |
+| `GPTBot` | OpenAI | Crawls for **model training** | Training-corpus inclusion only |
+| `ChatGPT-User` | OpenAI | Fetches a page when a **user** action requires it live | Live user-initiated fetches |
+| `ClaudeBot` | Anthropic | Crawl for Claude | Claude visibility |
+| `PerplexityBot` | Perplexity | Perplexity index | Perplexity citations |
+| `Google-Extended` | Google | Gemini / AI Overviews grounding | AI Overview eligibility |
+
+A store that allows `GPTBot` but blocks `OAI-SearchBot` has opted **into** training and **out of** citations — the exact inverse of what almost every merchant wants. Since the August 8 shift, this bot gates a larger share of retrieval than before: site:-scoped fanouts have to actually fetch from your domain.
+**Severity note:** This supersedes the old `GEO-C1`, which omitted `OAI-SearchBot` entirely. See `GEO-C1` below for the corrected allow-block.
+
+### R-C2 (Critical): Domain cannot answer its own site:-scoped questions
+**Where to look:** `templates/`, `pages/`, store navigation — the set of pages that exist at all
+**What to find:** A dedicated, crawlable, text-based page for each question a buyer asks before purchase
+**How to check:** Enumerate the fanouts a model would plausibly run against this store and confirm a page exists to satisfy each:
+
+| Likely fanout | Page that must exist |
+|---|---|
+| `site:store.com shipping` | Shipping policy with times, regions, costs as text |
+| `site:store.com returns` | Returns/refunds policy with the window stated numerically |
+| `site:store.com size guide` | Sizing page with measurements in a table, not an image |
+| `site:store.com materials` | Materials/care page, or per-product metafield rendered as text |
+| `site:store.com warranty` | Warranty terms |
+| `site:store.com about` | Brand/about page with substantive prose |
+| `site:store.com <product> review` | On-domain reviews rendered in HTML |
+
+**Flag if:** Any of these has no page, is a PDF, is an image, is inside an accordion that only renders on click, or exists only as an app-injected widget
+**Why it matters:** This is the check the August 8 change created. Before, a gap here meant the model fell back to the open web — possibly to a forum thread about you. Now the scoped search simply returns nothing and the citation goes to a competitor whose domain could answer.
+**Severity guidance:** Missing shipping, returns, or sizing → Critical. Missing warranty, materials, or about → High.
+
+### R-C3 (Critical): AI visibility depends on off-domain UGC
+**Where to look:** Where the store's trust and detail content actually lives
+**What to find:** Reviews, comparisons, sizing advice, and use-case content present as first-party HTML on the store's own domain
+**Flag if:** The substantive buying information about this product exists mainly on Reddit, YouTube, TikTok, marketplace listings, or a review app's hosted subdomain rather than the store's domain
+**Specifically flag:** Review apps that render only into a JS widget or an iframe on a third-party domain — the content is not on your domain for a site:-scoped search to find, and it is not in the HTML for a non-JS-executing crawler to read
+**Why it matters:** August 2026 demonstrated that a platform can revalue an entire content source overnight, without announcement or explanation, and that even the analysts measuring it cannot always say why. Any AI-visibility strategy resting on a surface the merchant does not own carries that risk permanently. First-party content on an owned domain is the only position that is not revocable by someone else's config change.
+**Fix direction:** Bring the substance on-domain — reviews rendered server-side into HTML, comparison content as real pages, sizing and materials as text. Off-domain presence is fine as *reinforcement*; it is dangerous as the *foundation*.
+
+### R-H1 (High): Store not verifiably present in the Bing index `[merchant action]`
+**What to find:** The store's key templates indexed in Bing (verify via Bing Webmaster Tools, or spot-check `site:` queries on Bing)
+**Flag if:** Product and policy pages are absent from Bing while present in Google
+**Why it matters:** ChatGPT Search retrieval runs on a blended stack — Bing's index plus OpenAI's own `OAI-SearchBot` crawl. Bing coverage is not the whole story, but a page missing from Bing loses one of the two main paths into a ChatGPT answer, and Bing indexation is the half a merchant can directly influence. Google rankings do not substitute.
+**Note:** This is a store-level action (submit sitemap to Bing Webmaster Tools), not a theme fix. Report it as `[merchant action]`.
+
+### R-H2 (High): Answer content requires JavaScript to appear
+**Where to look:** Any content that satisfies an `R-C2` row — policies, specs, sizing, reviews
+**Flag if:** The content is injected client-side, lives in an accordion whose panel is empty until clicked, or is loaded from a third-party script
+**Why it matters:** Retrieval crawlers largely do not execute JavaScript. Content that a human sees and a crawler does not is content that cannot be cited. This overlaps `GEO-H3` but is scored here because since August 8 it now blocks *scoped* retrieval, not just general crawling.
+**How to verify:** View source (not inspector) and search for the text. If it is absent from the raw HTML, it is invisible to retrieval.
+
+---
+
 ## AEO — ANSWER ENGINE OPTIMIZATION
 
 AEO optimizes the page for being quoted verbatim by ChatGPT, Claude, Perplexity, and Gemini when users ask product research questions. The mechanic is different from SEO: the model needs short, factual, well-attributed statements it can pull as a citation.
@@ -171,7 +274,9 @@ AEO optimizes the page for being quoted verbatim by ChatGPT, Claude, Perplexity,
 **Where to look:** `sections/main-product.liquid`, `templates/page.faq.liquid`, FAQ accordion sections
 **What to find:** `FAQPage` JSON-LD with question/answer pairs
 **Flag if:** Theme renders FAQ accordion UI but does not emit `FAQPage` schema
-**Why it matters:** FAQ schema is the single highest-leverage AEO signal. Google AI Overviews and ChatGPT both pull from it.
+**Why it matters:** FAQ schema gives answer engines clean, pre-segmented question/answer pairs to quote, and it is cheap to emit when the accordion UI already exists.
+**Calibration (revised v2.1):** Earlier versions of this checklist called FAQ schema "the single highest-leverage AEO signal." That overstated it. Google retired FAQ rich results for most sites, and schema is a *tie-breaker among retrieved pages* — it cannot rescue a page that retrieval never reached. Since the August 8 fanout shift, the higher-leverage work is `R-C2`: making sure a page answering the question exists on the domain at all. Emit the schema — it is 15 minutes and it helps at the margin — but fix retrieval eligibility first.
+**Note:** The *content* of the FAQ matters more than the markup. A `FAQPage` block wrapping vague marketing answers is worth less than plain HTML answering a real buyer question specifically.
 **Correct pattern:**
 ```liquid
 {%- if section.blocks.size > 0 -%}
@@ -236,10 +341,12 @@ And in Product schema:
 **Flag if:** Step-by-step content exists in HTML but no `HowTo` schema is emitted
 **Why it matters:** AI Overviews surface HowTo schema heavily for instructional queries
 
-### AEO-H3 (High): No Speakable schema for voice/assistant excerpts
+### AEO-L2 (Low): No Speakable schema — *demoted from High in v2.1*
 **Where to look:** Blog articles, FAQ pages
 **What to find:** `speakable` property on Article schema marking the summary CSS selector
-**Flag if:** Long-form content has no speakable hint
+**Status:** Google restricts `speakable` to a narrow set of news publishers and it has no demonstrated effect on ecommerce AI citations. Scoring it as High (−5) was not defensible.
+**Flag if:** Only when the store publishes news-style editorial content and the merchant has asked about voice surfaces. Otherwise skip.
+**Scoring:** Low (−1), or omit.
 **Correct pattern:**
 ```liquid
 "speakable": {
@@ -279,9 +386,12 @@ GEO is about being included when an LLM-powered surface (Google AI Overviews, Bi
 
 ### GEO-C1 (Critical): `robots.txt.liquid` blocks AI crawlers without intent
 **Where to look:** `templates/robots.txt.liquid` (if customized)
-**What to find:** Explicit `User-agent: GPTBot`, `User-agent: ClaudeBot`, `User-agent: PerplexityBot`, `User-agent: Google-Extended` rules
-**Flag if:** AI crawlers are disallowed without the merchant having made a deliberate choice to opt out
+**What to find:** Explicit rules for the **retrieval** bots (`OAI-SearchBot`, `PerplexityBot`, `Google-Extended`, `ClaudeBot`) as well as the training bot (`GPTBot`)
+**Flag if:** AI crawlers are disallowed without the merchant having made a deliberate choice to opt out — **or** if the file allows `GPTBot` but omits `OAI-SearchBot` (see `R-C1` for why these are not the same thing)
 **Why it matters:** Many themes carry over copy-pasted robots.txt blocks from 2023 SEO advice that fully blocked AI crawlers. If the merchant *wants* GEO visibility, these must be removed.
+
+> **Corrected in v2.1.** Earlier versions of this checklist recommended an allow-block that omitted `OAI-SearchBot`. That block opts a store into model training while leaving it out of ChatGPT Search citations. If you previously applied this skill's robots.txt recommendation, re-check the file against the block below.
+
 **Default recommendation (allow):**
 ```
 # In templates/robots.txt.liquid
@@ -289,10 +399,11 @@ GEO is about being included when an LLM-powered surface (Google AI Overviews, Bi
   {{ group | newline_to_br | strip_html }}
 {%- endfor -%}
 
-User-agent: GPTBot
+# Retrieval — gates whether you can be CITED
+User-agent: OAI-SearchBot
 Allow: /
 
-User-agent: ClaudeBot
+User-agent: ChatGPT-User
 Allow: /
 
 User-agent: PerplexityBot
@@ -301,15 +412,32 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
+User-agent: ClaudeBot
+Allow: /
+
+# Training — separate decision; safe to omit if the merchant opts out of training
+User-agent: GPTBot
+Allow: /
+
 Sitemap: {{ shop.url }}/sitemap.xml
 ```
+**Note on merchant intent:** Allowing retrieval bots while disallowing `GPTBot` is a coherent, defensible position — cited but not trained on. Do not flag that combination as an error. The incoherent combination is the reverse.
 
-### GEO-C2 (Critical): No `llms.txt` or equivalent AI-readable site map
-**Where to look:** Project root, `templates/page.llms.liquid`, or a static `llms.txt` served from the domain
-**What to find:** A plain-text overview of the store's primary collections, top products, and brand description optimized for LLM ingestion
-**Flag if:** No `llms.txt` exists at the store root
-**Why it matters:** The emerging `llms.txt` convention lets LLMs grasp the store quickly without crawling every product page
-**Note:** Shopify does not serve arbitrary root files, but a `page.llms` template at `/pages/llms-txt` is a reasonable substitute. Recommend the merchant publish this.
+### GEO-L3 (Low): No `llms.txt` — *demoted from Critical in v2.1; do not deduct 10 points for this*
+**Where to look:** `templates/page.llms.liquid`, or a static `llms.txt` served from the domain
+**Status:** **Retired as a Critical check. The evidence does not support it.**
+
+Earlier versions of this checklist scored a missing `llms.txt` as Critical (−10). That was wrong, and it cost audited stores ten points for the absence of a file that does essentially nothing. What the 2026 data actually shows:
+
+- No major AI provider reads `llms.txt` in production. GPTBot, ClaudeBot, PerplexityBot, `OAI-SearchBot`, and Google-Extended overwhelmingly skip it and crawl HTML directly.
+- An Ahrefs study of ~137,000 sites found **97% of `llms.txt` files received zero traffic**. One instrumented domain logged 84 requests to `/llms.txt` out of 62,100 total AI-bot visits — **0.1%**.
+- Google's June 2026 documentation update states `llms.txt` has **no effect, positive or negative**, on Search rankings or AI Overviews.
+- Large-scale studies find no relationship between having the file and being cited.
+
+**Flag if:** Nothing. Do not flag its absence.
+**Mention only if:** The merchant asks about it directly, or already maintains one and is allocating real effort to it — in which case tell them the effort is better spent on `R-C2` (domain coverage gaps), which is the check that actually feeds ChatGPT's site:-scoped fanouts.
+**The one real exception:** Documentation sites serving coding assistants (Cursor, Continue, Cline, MCP integrations) genuinely consume `llms.txt`. That is not a Shopify storefront use case.
+**Scoring:** Low (−1) at most, and only when the merchant has explicitly stated they want it. Default: omit from the report entirely.
 
 ### GEO-H1 (High): Brand `Organization` schema absent or incomplete
 **Where to look:** `layout/theme.liquid` or `snippets/organization-schema.liquid`
@@ -407,7 +535,9 @@ Note when any of the following is correctly implemented:
 - BreadcrumbList schema matching visible breadcrumb UI
 - Hreflang tags on multi-region stores
 - Open Graph and Twitter Card tags on every template
-- AI crawlers (GPTBot, ClaudeBot, PerplexityBot) allowed in robots.txt
+- **Retrieval crawlers allowed in robots.txt — specifically `OAI-SearchBot`, not just `GPTBot`**
+- **A dedicated on-domain page exists for shipping, returns, sizing, and materials (satisfies site:-scoped fanouts)**
+- **Reviews and specs rendered server-side into HTML rather than injected by a third-party widget**
 - `dateModified` on article schema and visible "last updated" in UI
 - Product description opens with a clear, definition-style factual sentence
 - Specifications rendered as semantic `<dl>` and PropertyValue in schema

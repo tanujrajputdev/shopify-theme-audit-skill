@@ -4,6 +4,8 @@
 
 Start at 100. Deduct points for each issue found across both checklists (`audit-checklist.md` and `seo-aeo-geo-checklist.md`).
 
+**Retrieval checks are scored first and reported first.** The `R-` tier in `seo-aeo-geo-checklist.md` gates whether any AEO or GEO work can pay off at all. A store failing `R-C1` (retrieval crawler blocked) or `R-C2` (no on-domain page to answer a scoped query) cannot be cited regardless of its schema coverage, so those findings lead the report and are never traded off against page-level polish.
+
 | Severity | Points deducted per issue |
 |---|---|
 | Critical | 10 |
@@ -28,12 +30,17 @@ Choose mode based on the user's request:
 
 | # | Issue | Severity | Est. effort | Est. impact | ROI |
 |---|---|---|---|---|---|
-| 1 | H3 — Add LCP preload to hero image | High | 5 min | LCP -400ms | ★★★★★ |
-| 2 | C6 — Add width/height to header logo | Critical | 5 min | CLS removed above fold | ★★★★★ |
-| 3 | GEO-C1 — Allow GPTBot/ClaudeBot in robots.txt | Critical | 10 min | AI citation eligibility | ★★★★★ |
-| 4 | M4 — Add Product JSON-LD via {{ product \| structured_data }} | Medium | 10 min | Rich snippets unlocked | ★★★★ |
-| 5 | AEO-C1 — Add FAQPage schema to existing FAQ block | Critical | 15 min | AI answer eligibility | ★★★★ |
+| 1 | R-C1 — Allow OAI-SearchBot in robots.txt | Critical | 5 min | Unblocks ChatGPT Search citation entirely | ★★★★★ |
+| 2 | H3 — Add LCP preload to hero image | High | 5 min | LCP -400ms | ★★★★★ |
+| 3 | C6 — Add width/height to header logo | Critical | 5 min | CLS removed above fold | ★★★★★ |
+| 4 | R-C2 — Publish the missing policy/sizing page as real text | Critical | 30 min | Answers site:-scoped fanouts that currently return nothing | ★★★★★ |
+| 5 | M4 — Add Product JSON-LD via {{ product \| structured_data }} | Medium | 10 min | Rich snippets unlocked | ★★★★ |
+| 6 | AEO-C1 — Add FAQPage schema to existing FAQ block | Critical | 15 min | Tie-breaker once retrieval works | ★★★ |
 | ... |
+
+**Ordering rule:** `R-` findings outrank everything else at equal effort. Fixing a robots.txt line is five minutes and can be the difference between eligible and invisible; no amount of schema work substitutes for it. Never place `AEO-C1` above an open `R-C1`.
+
+**Do not list `llms.txt` as a quick win.** It was ranked as one in v2.0. The evidence says AI crawlers do not fetch it (see `GEO-L3`). It is a fast task with no measured effect, which is the worst possible ROI profile — it looks productive and is not.
 ```
 
 Effort buckets: 5 min / 15 min / 1 hour / half-day / multi-day. Impact buckets: site-wide vs single-template, blocking vs visual. ROI rating is one to five stars derived from `impact_bucket ÷ effort_bucket`.
@@ -103,11 +110,14 @@ After the main findings, provide:
 **Accessibility:** [X] WCAG AA violations resolved
 
 **SEO (classic search):** [X] on-page improvements — title/meta/canonical/hreflang
-**AEO (ChatGPT, Claude, Perplexity citations):** [X] schema and content-structure improvements — FAQ, HowTo, Speakable, factual summaries
+**Retrieval eligibility:** [X] blocking issues resolved — crawler access, on-domain answer coverage, server-rendered content
+**AEO (ChatGPT, Claude, Perplexity citations):** [X] schema and content-structure improvements — FAQ, HowTo, factual summaries
 **GEO (AI Overviews, LLM-powered search):** [X] crawlability and trust improvements — Organization schema, AI crawler access, BreadcrumbList
 ```
 
 Note: These are estimates, not guarantees. Actual Lighthouse scores depend on server response time and third-party scripts outside theme control. AEO and GEO outcomes also depend on factors outside the theme — domain authority, backlinks, and the AI provider's retrieval choices on any given day.
+
+**State this honestly in every AEO/GEO report.** The August 2026 ChatGPT changes — the `site:` fanout shift on the 8th and the Reddit citation collapse on the 14th — landed overnight, unannounced, and the second one still has no confirmed mechanism. Publishers found out by watching their numbers move. Do not promise a citation outcome. What an audit can honestly promise is *eligibility*: the store is retrievable, its domain can answer the questions buyers ask, and its content is first-party rather than dependent on a surface someone else can revalue without notice. Frame every AEO estimate that way.
 
 ## What to audit when you cannot access theme files
 

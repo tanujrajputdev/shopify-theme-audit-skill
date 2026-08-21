@@ -4,7 +4,49 @@ This file documents what changed between versions and how much more the current 
 
 ---
 
-## v2.0 — June 2026 (current)
+## v2.1 — August 2026 (current)
+
+**A retrieval-layer update, plus two corrections to v2.0 that were costing users accuracy.**
+
+In one week of August 2026, ChatGPT Search changed how it retrieves. v2.0's AEO guidance was written for the world before that and audited the wrong layer. This release rebuilds the AEO/GEO model around retrieval and fixes two claims that the evidence no longer supports.
+
+### What changed in the world
+
+- **August 8, 2026** — ChatGPT Search began using the `site:` operator at scale. Domain-scoped fanout queries went from **0.37% to 16.8%** of all fanouts in a single day (~46×), and fanouts per response nearly doubled (**~1.08 → ~1.83**). The scoped searches are additive, not replacements. Retrieval is now two-stage: pick a domain, then search inside it.
+- **August 14, 2026** — Reddit's ChatGPT Search citation share fell from **3.83%** (Jul 18–Aug 7) to **0.52%** (Aug 14–17), an **86.4%** relative drop. **The cause is unresolved.** The drop came in two phases six days apart; the August 8 change does not explain the larger second one; the measuring firm cannot rule out a data-collection issue on its own end; OpenAI has not commented. This skill does not assert the causal link, and says so explicitly.
+
+### Added — the `R-` (retrieval) tier
+
+A new tier that runs *before* AEO and GEO, on the principle that schema is a tie-breaker among pages that were already retrieved:
+
+- **R-C1** — Retrieval crawler blocked or not explicitly allowed, with a bot-by-bot table separating retrieval crawlers from training crawlers
+- **R-C2** — Domain cannot answer its own `site:`-scoped questions, with a mapping of likely fanouts to the pages that must exist to satisfy them
+- **R-C3** — AI visibility depends on off-domain UGC the merchant does not control
+- **R-H1** — Store not verifiably present in the Bing index `[merchant action]`
+- **R-H2** — Answer content requires JavaScript to appear
+
+### Fixed — two v2.0 errors
+
+**1. The recommended robots.txt block omitted `OAI-SearchBot`.**
+v2.0 told merchants to allow `GPTBot`, `ClaudeBot`, `PerplexityBot`, and `Google-Extended`. `GPTBot` is OpenAI's *training* crawler. `OAI-SearchBot` is the one that builds the index behind ChatGPT Search citations, and it was missing. A store that applied v2.0's recommendation opted **into** model training and **out of** ChatGPT Search citations — the inverse of what nearly every merchant wants. **If you applied v2.0's robots.txt fix, re-check `templates/robots.txt.liquid` against the corrected block in `GEO-C1`.** The August 8 change makes this more costly, not less: site:-scoped fanouts have to fetch from your domain.
+
+**2. `llms.txt` was scored as Critical (−10). It has been demoted to Low, effectively retired.**
+The 2026 evidence: no major AI provider reads it in production; an Ahrefs study of ~137,000 sites found **97% of `llms.txt` files received zero traffic**; one instrumented domain logged 84 requests out of 62,100 AI-bot visits (**0.1%**); Google's June 2026 docs state it has no effect on Search or AI Overviews. v2.0 deducted ten points from stores for not having a file that does nothing, and listed creating it as a quick win. Both are corrected — see `GEO-L3`.
+
+### Recalibrated
+
+- **AEO-C1 (FAQ schema)** — v2.0 called it "the single highest-leverage AEO signal." Overstated. Google retired FAQ rich results for most sites, and schema cannot rescue a page retrieval never reached. Still worth emitting; no longer the headline.
+- **AEO-H3 → AEO-L2 (Speakable)** — demoted from High. Google restricts `speakable` to a narrow set of news publishers; scoring it at −5 for an ecommerce store was not defensible.
+- **Scoring** — `R-` findings lead the report and are never traded against page-level polish. Quick-wins table reordered; `llms.txt` removed from it.
+- **Honesty rule** — AEO estimates now promise *eligibility*, not citation outcomes. August 2026 showed a provider can revalue an entire source class overnight with no announcement and no confirmed explanation.
+
+### Note for AEO practitioners
+
+The durable takeaway from August is not "Reddit is dead" — that claim may not survive revision. It is that **AI visibility resting on a surface you do not own is revocable by someone else's config change.** First-party content on an owned domain is both the hedge against that and exactly what the `site:` fanout shift rewards. Both August events point the same way even though only one has a confirmed mechanism.
+
+---
+
+## v2.0 — June 2026
 
 The audit went from a single performance + accessibility checklist to a full search-era audit covering eight surfaces: performance, accessibility, CRO, third-party app overhead, classic SEO, Answer Engine Optimization, Generative Engine Optimization, and structured data depth.
 
@@ -105,7 +147,7 @@ It worked, but it only covered classic web-performance auditing. SEO was a singl
 | "Show me the exact Liquid I need to paste" | partial — patterns referenced, not always pasted | before-after.md pasted verbatim |
 | "I want SEO only, not performance" | full audit only | split-score mode separates the two |
 | "Is my robots.txt set up for AI crawlers?" | not covered | GEO-C1 check |
-| "Do I have an `llms.txt`?" | not covered | GEO-C2 check |
+| "Do I have an `llms.txt`?" | not covered | ~~GEO-C2 check~~ — *retired in v2.1, see above* |
 | "Are my product specs machine-readable?" | not covered | AEO-H1 check |
 | "Is my product schema complete enough for shopping AI?" | partial — Product schema check existed | GEO-M1 adds shipping + returns required by AI shopping |
 | "What grade is my theme?" | one number 0–100 | one or two numbers + letter grade + sample comparisons |

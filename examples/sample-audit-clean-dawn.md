@@ -106,7 +106,7 @@ Klaviyo settings have an override option — point it at the theme font.
 - Lazy loading correctly applied below the fold, eager for LCP candidate
 - Hreflang correctly emitted across 4 Shopify Markets locales (en-CA, en-US, fr-CA, en-GB)
 - FAQ section uses FAQPage schema correctly
-- robots.txt explicitly allows GPTBot, ClaudeBot, PerplexityBot, Google-Extended
+- robots.txt explicitly allows the retrieval crawlers — OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended — not just the training crawler GPTBot
 
 ---
 

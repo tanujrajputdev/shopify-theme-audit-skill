@@ -24,7 +24,27 @@ Before auditing, read these files in order:
 6. `deprecated-apis.md` — deprecated Shopify APIs and their current replacements
 7. `scoring.md` — how to calculate the score, choose between full / split-score / quick-wins modes, and format the output
 
+**Currency note:** the AEO/GEO guidance in this skill was last verified against live data on 2026-08-21, covering the August 8 and August 14 ChatGPT Search changes. AEO moves fast and unannounced. If significant time has passed, verify the retrieval-layer claims before presenting them as current.
+
 If the user requests a focused SEO/AEO/GEO audit only, read `seo-aeo-geo-checklist.md` and `scoring.md` first and skip the performance-only sections of `audit-checklist.md`. Otherwise, run the full audit.
+
+### Retrieval before quotability — required ordering for any AEO/GEO audit
+
+`seo-aeo-geo-checklist.md` opens with a section on the August 2026 ChatGPT Search changes and an `R-` (retrieval) tier. **Read both before flagging a single AEO or GEO issue.** The ordering is not cosmetic:
+
+- An answer engine can only cite a page it retrieved. Schema, headings, and quotable copy are tie-breakers *among retrieved candidates*; they do nothing for a page that was never a candidate.
+- Since August 8, 2026, ChatGPT runs `site:`-scoped fanout queries at scale (0.37% → 16.8% of all fanouts in one day). Retrieval is now two-stage: pick the domain, then search inside it. A store with no on-domain page answering a buyer question loses silently.
+- Always report `R-` findings before `AEO-` / `GEO-` findings, and never recommend schema work while an `R-C1` (blocked retrieval crawler) is open.
+
+**Two corrections to earlier versions of this skill — apply them:**
+1. `OAI-SearchBot` is the crawler behind ChatGPT Search citations. `GPTBot` is training-only. Versions before v2.1 recommended a robots.txt block that allowed `GPTBot` and omitted `OAI-SearchBot`, which opts a store into training and out of citations. If you see that block in a theme, flag it.
+2. `llms.txt` is **not** a Critical issue and its absence should not be flagged. The 2026 evidence shows AI crawlers do not fetch it (97% of files get zero traffic; Google states it has no effect). Earlier versions scored this at −10.
+
+### Handling the Reddit citation story
+
+If a merchant raises the August 14, 2026 Reddit citation collapse, represent it accurately: Reddit's ChatGPT citation share fell from 3.83% to 0.52% (−86.4%), **and the cause is not established.** The drop came in two phases six days apart, the August 8 `site:` change does not explain the larger second drop, the measuring firm cannot rule out a data-collection issue on its own end, and OpenAI has not commented. Do not state or imply that the `site:` change caused it.
+
+Audit against the durable lesson instead, which holds regardless of how it resolves: a store whose AI visibility depends on third-party UGC it does not control is exposed to unannounced platform changes. That is check `R-C3`.
 
 If the user uses phrases like "quick wins", "what should I fix first", "biggest bang for buck", or "highest ROI", switch to Quick-Wins mode per `scoring.md` — lead the report with the Quick Wins table before the standard sections.
 
@@ -131,3 +151,7 @@ Fix:
 - Do not recommend removing jQuery if the theme depends on it for other functionality
 - Do not flag N+1 issues in loops that iterate fewer than 5 items — the performance impact is negligible
 - Do not recommend changing brand fonts or colors — this is a technical audit, not a design review
+- Do not flag a missing `llms.txt` — see `GEO-L3`, the evidence does not support it
+- Do not claim FAQ schema is "the highest-leverage AEO signal" — it is a tie-breaker downstream of retrieval
+- Do not assert that the August 8 fanout change caused the August 14 Reddit citation drop — that link is unconfirmed
+- Do not promise citation outcomes. Audits deliver *eligibility*, not placement — AI providers change retrieval overnight without notice

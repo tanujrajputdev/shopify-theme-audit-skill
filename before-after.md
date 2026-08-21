@@ -555,6 +555,114 @@ Or hardcode in a metaobject and reference it:
 
 ---
 
+## R-C2 — Answer content exists only as an image or PDF
+
+A `site:`-scoped fanout retrieves **text**. A size chart shipped as a JPG is invisible to it.
+
+### WRONG
+```liquid
+{% comment %} sections/size-guide.liquid {% endcomment %}
+<h2>Size Guide</h2>
+<img src="{{ 'size-chart.jpg' | asset_url }}" alt="Size chart">
+<a href="{{ 'sizing.pdf' | asset_url }}">Download sizing PDF</a>
+```
+
+### RIGHT
+```liquid
+{% comment %} sections/size-guide.liquid — real text, server-rendered {% endcomment %}
+{%- assign sizes = product.metafields.custom.size_chart.value -%}
+<h2>Size guide</h2>
+{%- if sizes != blank -%}
+  <table class="size-guide">
+    <caption>{{ product.title }} measurements in centimetres</caption>
+    <thead>
+      <tr>
+        <th scope="col">Size</th>
+        <th scope="col">Chest</th>
+        <th scope="col">Waist</th>
+        <th scope="col">Length</th>
+      </tr>
+    </thead>
+    <tbody>
+      {%- for row in sizes -%}
+        <tr>
+          <th scope="row">{{ row.size }}</th>
+          <td>{{ row.chest }} cm</td>
+          <td>{{ row.waist }} cm</td>
+          <td>{{ row.length }} cm</td>
+        </tr>
+      {%- endfor -%}
+    </tbody>
+  </table>
+  <p>Between sizes? {{ shop.name }} recommends sizing up for a relaxed fit.</p>
+{%- endif -%}
+```
+
+Keep the image as a visual aid if you like — but the measurements must also exist as text in the HTML. Apply the same rule to shipping, returns, materials, and warranty pages.
+
+---
+
+## R-C3 / R-H2 — Reviews and specs injected by JavaScript
+
+Content a third-party widget renders client-side is not in the HTML, so retrieval crawlers cannot read it and a `site:`-scoped search cannot find it. It is also off-domain content the merchant does not control.
+
+### WRONG
+```liquid
+{% comment %} sections/main-product.liquid {% endcomment %}
+<div id="reviews-widget" data-product="{{ product.id }}"></div>
+<script src="https://cdn.reviews-app.example/widget.js" async></script>
+```
+
+### RIGHT
+```liquid
+{% comment %} sections/main-product.liquid — server-rendered reviews from metafields {% endcomment %}
+{%- assign reviews = product.metafields.reviews.list.value -%}
+{%- if reviews != blank -%}
+<section class="product-reviews" id="reviews">
+  <h2>Customer reviews for {{ product.title }}</h2>
+  {%- for review in reviews -%}
+    <article class="review">
+      <h3>{{ review.title }}</h3>
+      <p class="review-rating">Rated {{ review.rating }} out of 5</p>
+      <p class="review-body">{{ review.body }}</p>
+      <p class="review-meta">{{ review.author }} — {{ review.date }}</p>
+    </article>
+  {%- endfor -%}
+</section>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": {{ product.title | json }},
+  "review": [
+    {%- for review in reviews -%}
+      {
+        "@type": "Review",
+        "author": { "@type": "Person", "name": {{ review.author | json }} },
+        "datePublished": {{ review.date | json }},
+        "name": {{ review.title | json }},
+        "reviewBody": {{ review.body | json }},
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": {{ review.rating | json }},
+          "bestRating": "5"
+        }
+      }{%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  ]
+}
+</script>
+</section>
+{%- endif -%}
+```
+
+**How to verify the fix:** open view-source (not the inspector — the inspector shows the post-JavaScript DOM) and search for the review text. If it is not in the raw HTML, it is not retrievable.
+
+**Note on app-hosted reviews:** many review apps can sync reviews into Shopify metafields, which is what makes the block above possible. If the app cannot, that is a genuine reason to reconsider the app — the reviews are trust content the merchant is renting rather than owning.
+
+---
+
 ## GEO-C1 — `robots.txt.liquid` blocks AI crawlers
 
 ### WRONG
@@ -583,13 +691,12 @@ Disallow: /
   {% endif %}
 {% endfor %}
 
-User-agent: GPTBot
+# --- RETRIEVAL BOTS: these gate whether the store can be CITED ---
+
+User-agent: OAI-SearchBot
 Allow: /
 
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Claude-Web
+User-agent: ChatGPT-User
 Allow: /
 
 User-agent: PerplexityBot
@@ -598,49 +705,44 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# --- TRAINING BOTS: separate decision, safe to omit if opting out of training ---
+
+User-agent: GPTBot
+Allow: /
+
 User-agent: CCBot
 Allow: /
 ```
 
+> **Corrected in v2.1 — check your theme if you applied the earlier version of this block.**
+> The v2.0 RIGHT block allowed `GPTBot` but omitted `OAI-SearchBot`. Those are different crawlers with different jobs: `GPTBot` collects **training** data, while `OAI-SearchBot` builds the index behind **ChatGPT Search citations**. A store running the old block opted into training and out of citations — the inverse of what merchants almost always want.
+>
+> This matters more since ChatGPT Search began issuing `site:`-scoped fanout queries at scale on August 8, 2026 (0.37% → 16.8% of all fanouts in a single day). Those scoped searches have to reach your domain to return anything.
+>
+> Allowing the retrieval bots while disallowing `GPTBot` is a coherent position — cited but not trained on. Do not flag that combination. The incoherent one is the reverse.
+
 ---
 
-## GEO-C2 — No `llms.txt` summary file
+## GEO-L3 — `llms.txt` — RETIRED CHECK, do not flag
 
-### WRONG
-No `llms.txt` exposed.
+**Removed as a scored check in v2.1. Do not emit a finding for a missing `llms.txt`, and do not paste a RIGHT block for it.**
 
-### RIGHT
-Create a **page** in Shopify Admin with handle `llms-txt`, then expose `/llms.txt` via a redirect in `redirects.csv` to `/pages/llms-txt`, and use this template:
+v2.0 scored a missing `llms.txt` as Critical (−10) and listed creating one as a quick win. The 2026 evidence supports neither:
 
-```liquid
-{% comment %} templates/page.llms-txt.liquid {% endcomment %}
-{%- layout none -%}
-{{- page.content | strip_html -}}
-```
+- No major AI provider reads `llms.txt` in production. `GPTBot`, `ClaudeBot`, `PerplexityBot`, `OAI-SearchBot`, and `Google-Extended` overwhelmingly skip it and crawl HTML directly.
+- An Ahrefs study of ~137,000 sites found **97% of `llms.txt` files received zero traffic.** One instrumented domain logged 84 requests to `/llms.txt` out of 62,100 total AI-bot visits — **0.1%**.
+- Google's June 2026 documentation states `llms.txt` has **no effect, positive or negative,** on Search rankings or AI Overviews.
+- Large-scale studies find no relationship between having the file and being cited.
 
-Page content:
+The genuine adopters are documentation sites feeding coding assistants (Cursor, Continue, Cline, MCP integrations). That is not a Shopify storefront use case.
 
-```
-# {{ shop.name }}
-
-> One-sentence factual summary: what the store sells, who it's for.
-
-## About
-{{ shop.name }} sells [category] for [audience], shipping from [region].
-Founded in [year]. [One sentence of unique positioning, factual not promotional.]
-
-## Top categories
-- /collections/[handle] — [one-line description]
-- /collections/[handle] — [one-line description]
-
-## Policies
-- Returns: /policies/refund-policy
-- Shipping: /policies/shipping-policy
-- Privacy: /policies/privacy-policy
-
-## Contact
-support@[domain]
-```
+**Where the effort belongs instead — `R-C2`:** a real, crawlable, text-based page for every question a buyer asks before purchasing (shipping, returns, sizing, materials, warranty). That is what ChatGPT's `site:`-scoped fanouts actually retrieve. A store with a polished `llms.txt` and no sizing page has optimized the file nobody reads and skipped the one that gets cited.
 
 ---
 
