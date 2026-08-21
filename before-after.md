@@ -167,6 +167,49 @@ For responsive images, always set the **intrinsic** dimensions — the browser r
 
 ---
 
+## C7 — Oversized `json` metafield (2026-04 128KB cap)
+
+Limit: **128KB** for `json` metafields on API 2026-04+ ([changelog](https://shopify.dev/changelog/reduced-metafield-value-sizes)). Values written before 1 April 2026 are grandfathered at 2MB and still *read* fine — they fail on the next *write*. Shopify Functions receive `null` for any metafield over **10,000 bytes**.
+
+### WRONG
+```liquid
+{% comment %} One blob holding every spec, parsed on every product card {% endcomment %}
+{%- assign specs = product.metafields.custom.spec_table.value -%}
+<span>{{ specs.rows[0].value }}</span>
+```
+
+### RIGHT
+```liquid
+{% comment %}
+  snippets/product-card.liquid
+  Small metafield for the card. The heavy one never loads here.
+{% endcomment %}
+{%- assign summary = product.metafields.custom.spec_summary.value -%}
+{%- if summary != blank -%}
+  <span class="card-spec">{{ summary.headline }}</span>
+{%- endif -%}
+```
+
+```liquid
+{% comment %}
+  sections/main-product.liquid
+  Full detail only on the PDP, and only the fields rendered.
+{% endcomment %}
+{%- assign detail = product.metafields.custom.spec_detail.value -%}
+{%- if detail != blank -%}
+  <dl class="product-specs">
+    {%- for row in detail.rows -%}
+      <dt>{{ row.label }}</dt>
+      <dd>{{ row.value }}</dd>
+    {%- endfor -%}
+  </dl>
+{%- endif -%}
+```
+
+Prefer metaobjects when the data is genuinely relational — a list of metaobject references holds up to 1024 items and loads only the entries referenced.
+
+---
+
 ## H1 — JS without defer
 
 ### WRONG
@@ -897,6 +940,159 @@ const log = (...args) => { if (DEBUG) console.log(...args); };
 
 log('cart updated', cart);
 ```
+
+---
+
+## APP-C5 — Page builder loading globally
+
+Limit: an app **must not reduce storefront Lighthouse performance by more than 10 points** to be listed in the Shopify App Store ([performance docs](https://shopify.dev/docs/apps/build/performance)). Weighted Home 17% / Product 40% / Collection 43%.
+
+### WRONG
+```liquid
+{% comment %} layout/theme.liquid — builder script on every template {% endcomment %}
+<script src="https://cdn.pagefly.io/pagefly-runtime.js"></script>
+<link rel="stylesheet" href="https://cdn.pagefly.io/pagefly.css">
+```
+
+### RIGHT
+```liquid
+{% comment %}
+  layout/theme.liquid
+  Load the builder only on templates it actually renders.
+{% endcomment %}
+{%- assign builder_templates = 'page.landing,page.promo,page.lookbook' | split: ',' -%}
+{%- assign current = template.name -%}
+{%- if template.suffix != blank -%}
+  {%- assign current = template.name | append: '.' | append: template.suffix -%}
+{%- endif -%}
+
+{%- if builder_templates contains current -%}
+  <link rel="preconnect" href="https://cdn.pagefly.io" crossorigin>
+  <link rel="stylesheet" href="https://cdn.pagefly.io/pagefly.css">
+  <script src="https://cdn.pagefly.io/pagefly-runtime.js" defer></script>
+{%- endif -%}
+```
+
+Product and collection carry 83% of Shopify's weighting. If the builder must stay somewhere, keep it off those two first.
+
+---
+
+## APP-C6 — Accessibility overlay
+
+The FTC [ordered accessiBe to pay $1,000,000](https://www.ftc.gov/news-events/news/press-releases/2025/04/ftc-approves-final-order-requiring-accessibe-pay-1-million) and barred it from claiming its automated product makes sites WCAG-compliant. WebAIM found **67% of screen reader users rate overlays "not effective"** (72% among respondents with a disability).
+
+### WRONG
+```liquid
+{% comment %} layout/theme.liquid — a widget standing in for remediation {% endcomment %}
+<script>
+  window.interdeal = { sitekey: "abc123", Position: "right" };
+</script>
+<script src="https://cdn.userway.org/widget.js" data-account="XXXXXX"></script>
+<script src="https://acsbapp.com/apps/app/dist/js/app.js" defer></script>
+```
+
+### RIGHT
+```liquid
+{% comment %}
+  layout/theme.liquid — overlay removed. Fix the markup instead.
+  These are the structural fixes the overlay was covering for:
+{% endcomment %}
+<a class="skip-to-content" href="#MainContent">
+  {{ 'accessibility.skip_to_text' | t }}
+</a>
+
+<main id="MainContent" role="main" tabindex="-1">
+  {{ content_for_layout }}
+</main>
+```
+
+```css
+/* assets/theme.css — visible focus, real contrast, honoured motion preference */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+}
+.skip-to-content:focus {
+  left: 1rem;
+  top: 1rem;
+  z-index: 9999;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  color: #111;
+}
+
+*:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+Pair this with `C5` (skip link), `H5` (focus trap), `M2` (alt text), and the heading-hierarchy checks. Those are the actual remediation.
+
+---
+
+## APP-H7 — Custom web pixel doing too much
+
+**No Shopify-published payload cap exists for web pixels.** Do not cite one. The applicable published limits are the Built for Shopify performance ceilings: **LCP ≤ 2.5s, CLS ≤ 0.1, INP ≤ 200ms**, and no more than a 10-point Lighthouse reduction.
+
+### WRONG
+```javascript
+// Custom pixel: subscribes to everything, filters client-side, hand-rolls retries
+analytics.subscribe('all_events', (event) => {
+  const RETRY = 3;
+  let attempt = 0;
+  const send = () => {
+    fetch('https://example.com/collect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event)
+    }).catch(() => {
+      if (attempt++ < RETRY) setTimeout(send, 1000 * attempt);
+    });
+  };
+  send();
+});
+```
+
+### RIGHT
+```javascript
+// Subscribe only to the events the destination consumes, send the fields it needs.
+const ENDPOINT = 'https://example.com/collect';
+
+const send = (payload) => {
+  navigator.sendBeacon(ENDPOINT, JSON.stringify(payload));
+};
+
+analytics.subscribe('product_viewed', (event) => {
+  send({
+    name: event.name,
+    id: event.id,
+    productId: event.data.productVariant.product.id,
+    price: event.data.productVariant.price.amount
+  });
+});
+
+analytics.subscribe('checkout_completed', (event) => {
+  send({
+    name: event.name,
+    id: event.id,
+    orderId: event.data.checkout.order.id,
+    total: event.data.checkout.totalPrice.amount,
+    currency: event.data.checkout.totalPrice.currencyCode
+  });
+});
+```
+
+`sendBeacon` survives page unload and needs no retry loop — which is what most oversized custom pixels are actually reimplementing.
 
 ---
 

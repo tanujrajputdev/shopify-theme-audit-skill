@@ -43,6 +43,17 @@ Without theme access (live HTML only), search the rendered source for these sign
 | Hotjar | `static.hotjar.com`, `hjBootstrap` | Analytics |
 | Microsoft Clarity | `clarity.ms`, `clarityScript` | Session recording |
 | Vimeo / Wistia | `player.vimeo.com`, `fast.wistia.com` | Video |
+| PageFly | `pagefly.io`, `__pagefly`, `pf-` class prefix | Page builder |
+| Shogun | `shogun.site`, `shogun-landing`, `getshogun.com` | Page builder |
+| GemPages | `gempages.net`, `gem-`, `gemPagesConfig` | Page builder |
+| Zipify Pages | `zipify.com`, `zpages-` | Page builder |
+| LayoutHub | `layouthub.com`, `lh-section` | Page builder |
+| Replo | `replo.app`, `data-replo-id` | Page builder |
+| accessiBe | `acsbapp.com`, `acsb.js`, `accessiBe` | Accessibility overlay |
+| UserWay | `userway.org`, `userwayWidgetApp` | Accessibility overlay |
+| AudioEye | `audioeye.com`, `ae-toolbar` | Accessibility overlay |
+| EqualWeb | `equalweb.com`, `nagich` | Accessibility overlay |
+| Shopify web pixels | `web-pixels-manager`, `sandbox/worker`, `Shopify.analytics` | Platform pixel runtime |
 
 With theme file access, also check:
 - `layout/theme.liquid` for `{{ content_for_header }}` placement (apps inject here — must be in `<head>`, not body)
@@ -128,6 +139,77 @@ With theme file access, also check:
 
 ---
 
+### APP-C5: Page builder injects more script weight than Shopify's own App Store limit allows
+
+**Where to look:** Rendered HTML of any page built with the app; network panel filtered to the builder's origin
+**What to find:** Total JS + CSS the builder injects, and which templates it loads on
+**Detect via:** `pagefly.io`, `shogun.site`, `gempages.net`, `zipify.com`, `layouthub.com`, `replo.app` (see detection table)
+
+**The citable limit — Shopify's own:**
+> "To be published in the Shopify App Store, your app must not reduce storefront Lighthouse performance scores by more than 10 points."
+> — [About performance optimization](https://shopify.dev/docs/apps/build/performance), restated as [Built for Shopify requirement 2.2.1](https://shopify.dev/docs/apps/launch/built-for-shopify/requirements)
+
+Shopify measures this as a weighted average across three templates — **Home 17%, Product 40%, Collection 43%** — comparing Lighthouse before and after install ([Storefront performance](https://shopify.dev/docs/apps/build/performance/storefront)). A theme also cannot enter the Theme Store below an **average Lighthouse performance score of 60** across those pages ([Theme store requirements](https://shopify.dev/docs/storefronts/themes/store/requirements)).
+
+**Flag if:** The builder's injected JS exceeds **~250KB** on any template, loads on templates that contain no builder-authored content, or independent measurement shows a Lighthouse delta beyond 10 points.
+
+**Why it matters:** Ten points is the published ceiling. Published third-party benchmarks put the major page builders at **260–340KB of injected JavaScript** and mobile Lighthouse deltas of **16–35 points** — two to three and a half times Shopify's own limit. Treat any measured delta over 10 points as Critical regardless of which app it is.
+
+**How to measure it yourself (do this rather than trusting a vendor number):**
+1. Duplicate the theme, remove the builder's content from one copy, publish both to a dev store.
+2. Run Lighthouse three times per template on each, take the median.
+3. Weighted delta = `(home_delta × 0.17) + (product_delta × 0.40) + (collection_delta × 0.43)`.
+4. Report the number. A measured delta beats a benchmark blog every time.
+
+**Fix — in priority order:**
+1. **Scope the script to the templates that need it.** The most common failure is a builder loading globally to serve three landing pages.
+2. **Rebuild high-traffic templates as native Online Store 2.0 sections.** PDP and collection carry 83% of Shopify's weighting; those are the pages worth moving off the builder first.
+3. **Keep the builder for genuinely low-traffic marketing pages** where the delta does not touch product or collection.
+
+**Do not flag** a builder used only on `/pages/*` marketing templates whose script does not load on product, collection, or home. That is the correct way to use one.
+
+---
+
+### APP-C6: Accessibility overlay installed
+
+**Where to look:** Rendered HTML `<head>` and end of `<body>`; `layout/theme.liquid`
+**Detect via:** `acsbapp.com` / `acsb.js` (accessiBe), `userway.org` (UserWay), `audioeye.com` (AudioEye), `equalweb.com` / `nagich` (EqualWeb)
+
+**The citable record:**
+- The **FTC ordered accessiBe to pay $1,000,000** for deceptive claims that its product could make websites WCAG-compliant. The order was announced January 2025 and [approved as final in April 2025](https://www.ftc.gov/news-events/news/press-releases/2025/04/ftc-approves-final-order-requiring-accessibe-pay-1-million). It **bars the company from representing that its automated product can make any website WCAG-compliant, or keep it compliant over time, without evidence** ([case file](https://www.ftc.gov/legal-library/browse/cases-proceedings/2223156-accessibe-inc)).
+- The FTC also alleged accessiBe **formatted third-party articles and reviews to appear independent** when they were not.
+- **WebAIM's screen reader user survey found 67% of respondents rated accessibility overlays, plugins, and widgets "not effective" — rising to 72% among respondents who have a disability** ([WebAIM](https://webaim.org/projects/screenreadersurvey/)).
+- Businesses running overlays **have still been sued in the hundreds.** Courts assess actual accessibility, not installed software.
+- Shopify's own bar is structural, not bolt-on: themes need a **minimum average Lighthouse accessibility score of 90** to enter the Theme Store ([requirements](https://shopify.dev/docs/storefronts/themes/store/requirements)). An overlay does not raise that score, because it does not change the markup Lighthouse parses.
+
+**Flag if:** Any overlay script is present. Severity Critical.
+
+**Why it matters — three separate costs:**
+1. **Legal.** The overlay is frequently sold as litigation protection. It is not, and the vendor is now legally barred from claiming it is. A merchant who believes they are covered and is not has bought risk, not insurance.
+2. **Accessibility.** Overlays run after the DOM is parsed. Assistive tech reads the source. Overlays routinely break keyboard navigation and fight the user's own screen reader settings.
+3. **Performance.** It is another render-blocking third-party origin on every pageview.
+
+**Fix:** Remove the overlay and fix the underlying markup. The overlay is almost always masking findings this audit already reports:
+- `C5` — skip-to-content link
+- `H5` — focus trap on cart drawer / modals
+- `M2` / `S-H5` — image alt text
+- Heading hierarchy (`S-H1`, `S-H2`)
+- Colour contrast and visible focus states in theme CSS
+
+```liquid
+{% comment %}
+  layout/theme.liquid — REMOVE overlay injections like these:
+  <script src="https://acsbapp.com/apps/app/dist/js/app.js"></script>
+  <script src="https://cdn.userway.org/widget.js" data-account="..."></script>
+{% endcomment %}
+```
+
+**How to report this one:** State it factually and without moralising. The merchant was very likely sold the overlay as compliance protection by a vendor the FTC has since fined for exactly that claim. Cite the order, list the underlying issues the audit found, and let the record speak.
+
+**Note:** If the merchant has a contractual or procurement reason to keep the overlay, still fix the underlying markup. The two are not alternatives — one is real remediation and the other is a widget.
+
+---
+
 ## HIGH — Each deducts 5 points
 
 ### APP-H1: Review widget renders empty container above the fold
@@ -185,6 +267,74 @@ Better: lazy-mount the widget below the fold via IntersectionObserver.
 **Where to look:** Recharge / Bold Subscriptions integration on PDP
 **What to find:** Subscription app injects its own ATC handler, replacing or wrapping the theme's ATC. Adds 200-400ms to first-click responsiveness.
 **Fix:** Use the app's native theme integration (not the legacy Script Tag injection). For Recharge, use Recharge's checkout integration block instead of `recharge.js`.
+
+---
+
+### APP-H7: Web pixel sprawl and oversized custom pixel payloads
+
+**Where to look:** Shopify admin → **Settings → Customer events**; rendered HTML for `web-pixels-manager`
+**What to find:** How many pixels are registered, whether each is an **app pixel** (strict sandbox) or a **custom pixel** (lax sandbox), and how much code each custom pixel carries
+
+**Important — read before writing a threshold into a report.** Shopify publishes **no maximum payload size for web pixels.** Do not cite one. The 128KB figures in Shopify's documentation belong to two other features and are frequently misattributed to pixels:
+
+| Limit | Actual subject | Source |
+|---|---|---|
+| **128KB** | JSON **metafield** writes, API 2026-04+ | [changelog](https://shopify.dev/changelog/reduced-metafield-value-sizes) |
+| **128KB** | **Shopify Functions** input size (raised from 64KB) | [changelog](https://shopify.dev/changelog/shopify-functions-input-size-limit-increased-to-128kb) |
+| **64KB compressed** | **UI extensions** bundle size | [App extensions](https://shopify.dev/docs/apps/build/app-extensions) |
+| *(none published)* | **Web pixels** | — |
+
+If you flag pixel weight, say plainly that the threshold is this audit's, not Shopify's. Never present a self-chosen number as a platform limit.
+
+**The citable limits that do apply to pixels** are the performance ceilings every storefront script is measured against — [Built for Shopify requirements](https://shopify.dev/docs/apps/launch/built-for-shopify/requirements) §2.1–2.2: **LCP ≤ 2.5s, CLS ≤ 0.1, INP ≤ 200ms**, and **no more than a 10-point storefront Lighthouse reduction**. A pixel that pushes a store past those is a finding with a real number behind it.
+
+**The documented mechanic that actually matters — sandbox type:**
+
+| Pixel type | Sandbox | Runtime | Main-thread cost |
+|---|---|---|---|
+| **App pixel** (from an installed app) | **Strict** — web worker | Off the main thread | Low |
+| **Custom pixel** (merchant-written, admin UI) | **Lax** | Not worker-isolated | Higher — can contend with rendering |
+
+Source: [About web pixels](https://shopify.dev/docs/apps/build/marketing/pixels) and [Web Pixels API](https://shopify.dev/docs/api/web-pixels-api).
+
+**Flag if:**
+- **(High)** More than one pixel sends to the same destination — duplicate GA4, or a GTM container plus a standalone GA4 pixel. Double-counted events corrupt the merchant's own reporting, which is a data-integrity problem before it is a performance one.
+- **(High)** A custom pixel carries heavy logic — large lookup objects, retry loops, polling, or an inlined vendor SDK. This is the one worth a size heuristic: **flag custom pixels over ~15KB of code** and state the threshold is ours.
+- **(Medium)** A pixel duplicates a script also hardcoded in `theme.liquid`. Migrating to a pixel is correct; leaving both is not.
+- **(Medium)** Pixels fire on every event when the destination needs three or four. Subscribe narrowly.
+
+**Fix — subscribe to specific events instead of everything:**
+```javascript
+// WRONG — custom pixel subscribing to all events, then filtering client-side
+analytics.subscribe('all_events', (event) => {
+  if (['product_viewed','checkout_completed'].includes(event.name)) {
+    fetch('https://example.com/collect', {
+      method: 'POST',
+      body: JSON.stringify(event)
+    });
+  }
+});
+
+// RIGHT — subscribe only to what the destination consumes
+analytics.subscribe('product_viewed', (event) => {
+  navigator.sendBeacon('https://example.com/collect', JSON.stringify({
+    name: event.name,
+    id: event.id,
+    productId: event.data.productVariant.product.id
+  }));
+});
+
+analytics.subscribe('checkout_completed', (event) => {
+  navigator.sendBeacon('https://example.com/collect', JSON.stringify({
+    name: event.name,
+    id: event.id,
+    total: event.data.checkout.totalPrice.amount
+  }));
+});
+```
+`sendBeacon` does not block unload and does not need a retry loop. Most oversized custom pixels are oversized because they hand-roll delivery that the platform already handles.
+
+**Do not flag** app pixels simply for existing. Strict-sandbox app pixels running in a web worker are the *correct*, Shopify-recommended replacement for hardcoded tracking script in `theme.liquid`. Migrating tracking into a pixel is an improvement — note it as a positive finding.
 
 ---
 

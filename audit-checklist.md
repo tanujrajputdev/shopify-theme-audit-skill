@@ -66,6 +66,97 @@ This file covers performance, accessibility, conversion, and core Liquid quality
 
 ---
 
+### C7: JSON metafield exceeding the 2026-04 128KB cap
+
+**Where to look:** Any template or snippet reading `.metafields.<namespace>.<key>` on a `json`-type metafield — commonly size charts, spec tables, variant maps, bundle configs, and app-owned config blobs
+**What to find:** JSON metafields whose stored value approaches or exceeds **128KB**
+
+**The citable limit:**
+> "When using API version 2026-04 or later, JSON type metafield writes will be limited to 128KB."
+> — [JSON metafield values limited to 128KB](https://shopify.dev/changelog/reduced-metafield-value-sizes), published **19 February 2026**, flagged **Breaking API Change / Action required**
+
+Confirmed on the [Metafield limits](https://shopify.dev/docs/apps/build/metafields/metafield-limits) reference:
+
+| Metafield type | Size limit |
+|---|---|
+| `json` | **128KB** |
+| most other types | 64KB (65,536 bytes) |
+| `id` | 2KB |
+| `url` | 2KB |
+| lists | max 128 items (metaobject references: 1024) |
+
+**Three details that decide whether this is Critical or merely a warning:**
+
+1. **Grandfathering.** Apps using JSON fields **before 1 April 2026** are grandfathered at the old **2MB** limit. Existing oversized values remain **readable by all API versions, including future ones.** So a store can be sitting on a 900KB metafield that still renders fine today — and breaks the first time anything tries to *write* it on 2026-04+.
+2. **The cap was revised.** Shopify initially announced **16KB**, then raised it to 128KB after developer feedback. If a theme or app was hardened against the 16KB figure, that work was against a number that no longer applies.
+3. **Shopify Functions cut off far lower.** Function input queries **do not return metafield values larger than 10,000 bytes** — the value is still stored and the Admin API still returns it, but *the function receives `null`*. A discount or delivery function reading a large JSON metafield fails silently, with no error anywhere.
+
+**Flag if:**
+- **Critical** — a `json` metafield is over 128KB **and** anything writes to it (an app sync, a CSV import, an admin save). The next write fails.
+- **Critical** — a Shopify Function reads a metafield over 10,000 bytes. It is already receiving `null`.
+- **High** — a `json` metafield is over 128KB, currently read-only and grandfathered. Not broken yet; one migration away from breaking.
+- **Medium** — a `json` metafield is over ~64KB and growing with catalogue size.
+
+**Why it matters beyond the API error —** Shopify's stated reason for the cap is storefront performance:
+> "Large JSON metafield negatively impact storefront performance—particularly when multiple large values are loaded together, which can result in tens of megabytes of data being fetched for a single page."
+
+A collection page rendering 24 products that each carry a 128KB JSON metafield pulls **~3MB of metafield data** before a single image loads.
+
+**How to check the actual size:**
+```graphql
+# GraphQL Admin API — inspect stored size before assuming it is fine
+{
+  products(first: 50) {
+    edges {
+      node {
+        handle
+        metafield(namespace: "custom", key: "spec_table") {
+          type
+          value
+        }
+      }
+    }
+  }
+}
+```
+Measure `value` in **bytes, not characters** — multi-byte UTF-8 (curly quotes, accents, emoji) makes byte length exceed string length.
+
+**Fix — stop loading the whole blob to render part of it:**
+```liquid
+{% comment %} WRONG — parses the entire JSON metafield on every product card {% endcomment %}
+{%- assign specs = product.metafields.custom.spec_table.value -%}
+{{ specs.rows[0].label }}
+```
+```liquid
+{% comment %}
+  RIGHT — split one oversized blob into targeted metafields, or move to a
+  metaobject and reference only the entry needed.
+{% endcomment %}
+{%- assign summary = product.metafields.custom.spec_summary.value -%}
+{%- if summary != blank -%}
+  <dl class="spec-summary">
+    {%- for row in summary -%}
+      <dt>{{ row.label }}</dt><dd>{{ row.value }}</dd>
+    {%- endfor -%}
+  </dl>
+{%- endif -%}
+
+{% comment %} Full detail loads only on the product page, not on cards {% endcomment %}
+{%- if template contains 'product' -%}
+  {%- assign detail = product.metafields.custom.spec_detail.value -%}
+  ...
+{%- endif -%}
+```
+
+**Migration options, in order of preference:**
+1. **Split by access pattern** — a small metafield for what cards need, a larger one for the detail page. Usually removes the problem outright.
+2. **Move to metaobjects** — structured entries referenced individually rather than one serialized blob. Lists of metaobject references allow up to 1024 items.
+3. **Request an exception** — Shopify grants >128KB case by case for genuine use cases. This is a last resort, not a first move.
+
+**Do not flag** small `json` metafields, and do not flag a large one purely on type. Check the measured byte size. A `json` metafield is the right tool for structured data — the cap is about size, not about the type.
+
+---
+
 ## HIGH SEVERITY — Each deducts 5 points
 
 ### H1: JavaScript files without defer or async
@@ -206,6 +297,11 @@ This file covers performance, accessibility, conversion, and core Liquid quality
 ---
 
 ## POSITIVE FINDINGS — Add these to the "What This Theme Does Well" section
+
+- Tracking migrated into Shopify web pixels (strict sandbox / web worker) rather than hardcoded in `theme.liquid`
+- Native Online Store 2.0 sections used on product and collection instead of a page builder
+- Accessibility handled in the markup rather than by a third-party overlay widget
+- `json` metafields kept small and split by access pattern, well inside the 128KB cap
 
 Note when you find any of the following already implemented correctly:
 - Hero image with preload hint

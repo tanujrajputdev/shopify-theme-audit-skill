@@ -13,6 +13,8 @@ Start at 100. Deduct points for each issue found across both checklists (`audit-
 | Medium | 2 |
 | Low | 1 |
 
+**Cite the limit, or do not state one.** Several checks are anchored to published, verifiable ceilings — Shopify's 10-point App Store Lighthouse limit (`APP-C5`), the 128KB `json` metafield cap in API 2026-04 (`C7`), the Built for Shopify Core Web Vitals thresholds, the FTC order behind `APP-C6`. When a finding rests on one of these, link it. When a threshold is this audit's own judgement rather than a platform limit — the ~15KB custom-pixel heuristic in `APP-H7`, for example — say so in the finding. Never present a self-chosen number as a platform rule; a merchant who repeats it to a developer will be corrected, and the whole report loses credibility with it.
+
 Minimum score is 0. Score cannot go below 0.
 
 ## Audit modes
@@ -35,10 +37,13 @@ Choose mode based on the user's request:
 | 3 | C6 — Add width/height to header logo | Critical | 5 min | CLS removed above fold | ★★★★★ |
 | 4 | R-C2 — Publish the missing policy/sizing page as real text | Critical | 30 min | Answers site:-scoped fanouts that currently return nothing | ★★★★★ |
 | 5 | M4 — Add Product JSON-LD via {{ product \| structured_data }} | Medium | 10 min | Rich snippets unlocked | ★★★★ |
-| 6 | AEO-C1 — Add FAQPage schema to existing FAQ block | Critical | 15 min | Tie-breaker once retrieval works | ★★★ |
+| 6 | APP-C5 — Scope page builder script to its own templates | Critical | 20 min | Recovers Lighthouse points on PDP + collection | ★★★★★ |
+| 7 | AEO-C1 — Add FAQPage schema to existing FAQ block | Critical | 15 min | Tie-breaker once retrieval works | ★★★ |
 | ... |
 
 **Ordering rule:** `R-` findings outrank everything else at equal effort. Fixing a robots.txt line is five minutes and can be the difference between eligible and invisible; no amount of schema work substitutes for it. Never place `AEO-C1` above an open `R-C1`.
+
+**Do not list `APP-C6` (accessibility overlay) as a quick win.** Removing the script takes two minutes, but the finding is not resolved until the underlying markup is fixed. Listing it as a quick win implies a two-minute path to accessibility, which is the exact false promise the overlay itself makes. Report it as Critical with the structural fixes attached.
 
 **Do not list `llms.txt` as a quick win.** It was ranked as one in v2.0. The evidence says AI crawlers do not fetch it (see `GEO-L3`). It is a fast task with no measured effect, which is the worst possible ROI profile — it looks productive and is not.
 ```

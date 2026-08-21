@@ -4,7 +4,44 @@ This file documents what changed between versions and how much more the current 
 
 ---
 
-## v2.1 — August 2026 (current)
+## v2.2 — August 2026 (current)
+
+**Four new checks, each anchored to a published limit rather than a rule of thumb.**
+
+| Check | The limit | Source |
+|---|---|---|
+| `APP-C5` — Page builder script weight | App must not reduce storefront Lighthouse by **>10 points** to be listed | [shopify.dev/docs/apps/build/performance](https://shopify.dev/docs/apps/build/performance) |
+| `APP-C6` — Accessibility overlay detection | **FTC $1M order** barring WCAG-compliance claims; WebAIM **67%** "not effective" | [FTC](https://www.ftc.gov/news-events/news/press-releases/2025/04/ftc-approves-final-order-requiring-accessibe-pay-1-million) · [WebAIM](https://webaim.org/projects/screenreadersurvey/) |
+| `C7` — JSON metafield size | **128KB** cap on `json` metafields, API **2026-04**+ | [changelog](https://shopify.dev/changelog/reduced-metafield-value-sizes) |
+| `APP-H7` — Web pixel sprawl | Built for Shopify **LCP 2.5s / CLS 0.1 / INP 200ms**, 10-point Lighthouse | [BFS requirements](https://shopify.dev/docs/apps/launch/built-for-shopify/requirements) |
+
+### A correction worth stating plainly
+
+`APP-H7` was scoped as "web pixel payload against the 128KB ceiling." **There is no published 128KB ceiling for web pixels.** Shopify's two 128KB figures belong elsewhere — `json` metafield writes on 2026-04+ (which is `C7`) and Shopify Functions input size. UI extensions cap at 64KB compressed. Web pixels have no published payload limit, and a Shopify Community thread asking precisely this went unanswered.
+
+Rather than invent one, `APP-H7` is built on what *is* documented: the strict (web worker) vs lax sandbox distinction, duplicate-destination detection, and the Built for Shopify performance ceilings. It carries a ~15KB custom-pixel heuristic that is **explicitly labelled as this audit's threshold, not Shopify's.** `scoring.md` now carries a general rule requiring that labelling.
+
+### Details worth knowing on `C7`
+
+- Apps writing JSON metafields **before 1 April 2026 are grandfathered at 2MB.** Oversized values stay *readable* on all API versions and fail on the next *write* — so a store can look fine and be one sync away from breaking.
+- The cap was originally announced at **16KB** and revised to 128KB after developer feedback. Work hardened against 16KB was aimed at a number that no longer applies.
+- **Shopify Functions receive `null` for any metafield over 10,000 bytes.** The value is still stored and the Admin API still returns it — the function just silently gets nothing. No error is raised anywhere.
+
+### On `APP-C5` and `APP-C6`
+
+Published benchmarks put the major page builders at 260–340KB of injected JS and **16–35 point** mobile Lighthouse deltas — two to three and a half times Shopify's own published ceiling. `APP-C5` includes a measurement procedure using Shopify's weighting (Home 17% / Product 40% / Collection 43%) so the report can carry a measured number rather than a citation to someone's benchmark post.
+
+The overlay check is deliberately written to be reported without moralising. Merchants were sold these as litigation protection by a vendor the FTC has since fined for that exact claim. The check cites the order and lists the underlying accessibility findings the overlay was masking.
+
+### Also
+
+- Detection table extended with six page builders, four overlay vendors, and the web pixel runtime.
+- `before-after.md` gains paste-able WRONG → RIGHT pairs for all four.
+- New positive findings: tracking migrated to strict-sandbox pixels, native OS 2.0 sections over a builder, accessibility handled in markup, `json` metafields split by access pattern.
+
+---
+
+## v2.1 — August 2026
 
 **A retrieval-layer update, plus two corrections to v2.0 that were costing users accuracy.**
 
