@@ -4,7 +4,19 @@ This file documents what changed between versions and how much more the current 
 
 ---
 
-## v2.4 — November 2026 (current)
+## v2.4.1 — November 2026 (current)
+
+**The recommended robots.txt block let AI bots past Shopify's checkout and cart rules. Fixed.**
+
+- The `GEO-C1` RIGHT block (`before-after.md`) and the default recommendation in `seo-aeo-geo-checklist.md` gave each AI crawler its own group containing only `Allow: /`. A crawler obeys only the most specific group that names it, so those bots ignored the `/checkout`, `/cart`, `/admin` and `/account` disallows in Shopify's `User-agent: *` group. Both blocks now put the AI crawlers in one group that repeats the `*` group's rules through `robots.default_groups`.
+- The checklist's default block printed Shopify's groups with `{{ group | newline_to_br | strip_html }}` and appended its own `Sitemap:` line. It now uses the documented `group.user_agent` / `group.rules` / `group.sitemap` loop, which already outputs the sitemap.
+- `GEO-C1` "What to find" still listed `ClaudeBot` among the retrieval bots, a leftover from before v2.3. It now names `Claude-SearchBot` and treats `GPTBot` and `ClaudeBot` as training.
+
+If you applied the v2.3 or v2.4 block, replace it with the one in `before-after.md`.
+
+---
+
+## v2.4 — November 2026
 
 **Installs as a standard Claude Code skill.**
 

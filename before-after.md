@@ -723,7 +723,7 @@ Disallow: /
 
 ### RIGHT
 ```liquid
-{% comment %} templates/robots.txt.liquid — allow AI bots, keep checkout disallowed {% endcomment %}
+{% comment %} templates/robots.txt.liquid — allow AI bots, keep checkout, cart and admin disallowed for them too {% endcomment %}
 {% for group in robots.default_groups %}
   {{- group.user_agent }}
   {% for rule in group.rules %}
@@ -734,40 +734,31 @@ Disallow: /
   {% endif %}
 {% endfor %}
 
+# AI crawlers share ONE group that repeats Shopify's default path rules.
+# A crawler obeys only the most specific group that names it, so a separate
+# "User-agent: OAI-SearchBot" + "Allow: /" group would let that bot into
+# /checkout, /cart and /admin. Comment lines between user-agents are ignored.
+
 # --- RETRIEVAL: these gate whether the store can be CITED ---
-
 User-agent: OAI-SearchBot
-Allow: /
-
 User-agent: Claude-SearchBot
-Allow: /
-
 User-agent: PerplexityBot
-Allow: /
-
 # --- USER-INITIATED FETCH ---
-
 User-agent: ChatGPT-User
-Allow: /
-
 User-agent: Claude-User
-Allow: /
-
 # --- DUAL: Gemini training AND AI Overviews grounding ---
-
 User-agent: Google-Extended
-Allow: /
-
-# --- TRAINING: separate decision, omit these to opt out of training ---
-
+# --- TRAINING: separate decision. To opt out, move these into their own group with "Disallow: /" ---
 User-agent: GPTBot
-Allow: /
-
 User-agent: ClaudeBot
-Allow: /
-
 User-agent: CCBot
-Allow: /
+{%- for group in robots.default_groups -%}
+  {%- if group.user_agent.value == '*' -%}
+    {%- for rule in group.rules %}
+{{ rule }}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endfor %}
 ```
 
 > **Corrected twice — check your theme if you applied either earlier block.**
