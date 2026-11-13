@@ -406,7 +406,7 @@ GEO is about being included when an LLM-powered surface (Google AI Overviews, Bi
 
 ### GEO-C1 (Critical): `robots.txt.liquid` blocks AI crawlers without intent
 **Where to look:** `templates/robots.txt.liquid` (if customized)
-**What to find:** Explicit rules for the **retrieval** bots (`OAI-SearchBot`, `PerplexityBot`, `Google-Extended`, `ClaudeBot`) as well as the training bot (`GPTBot`)
+**What to find:** Explicit rules for the **retrieval** bots (`OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot`) and `Google-Extended`, with the **training** bots (`GPTBot`, `ClaudeBot`) handled as a separate decision
 **Flag if:** AI crawlers are disallowed without the merchant having made a deliberate choice to opt out — **or** if the file allows `GPTBot` but omits `OAI-SearchBot` (see `R-C1` for why these are not the same thing)
 **Why it matters:** Many themes carry over copy-pasted robots.txt blocks from 2023 SEO advice that fully blocked AI crawlers. If the merchant *wants* GEO visibility, these must be removed.
 
@@ -418,41 +418,43 @@ GEO is about being included when an LLM-powered surface (Google AI Overviews, Bi
 > **If you applied either version's robots.txt recommendation, re-check the file against the block below.**
 
 **Default recommendation (allow):**
-```
+```liquid
 # In templates/robots.txt.liquid
-{%- for group in robots.default_groups -%}
-  {{ group | newline_to_br | strip_html }}
-{%- endfor -%}
+{% for group in robots.default_groups %}
+  {{- group.user_agent }}
+  {% for rule in group.rules %}
+    {{- rule }}
+  {% endfor %}
+  {% if group.sitemap %}
+    {{- group.sitemap }}
+  {% endif %}
+{% endfor %}
 
-# --- RETRIEVAL: gates whether you can be CITED ---
+# AI crawlers share ONE group that repeats Shopify's default path rules.
+# A crawler obeys only the most specific group that names it, so a separate
+# "User-agent: OAI-SearchBot" + "Allow: /" group would let that bot into
+# /checkout, /cart and /admin. Comment lines between user-agents are ignored.
+
+# --- RETRIEVAL: these gate whether the store can be CITED ---
 User-agent: OAI-SearchBot
-Allow: /
-
 User-agent: Claude-SearchBot
-Allow: /
-
 User-agent: PerplexityBot
-Allow: /
-
 # --- USER-INITIATED FETCH ---
 User-agent: ChatGPT-User
-Allow: /
-
 User-agent: Claude-User
-Allow: /
-
 # --- DUAL: Gemini training AND AI Overviews grounding ---
 User-agent: Google-Extended
-Allow: /
-
-# --- TRAINING: separate decision, safe to omit to opt out of training ---
+# --- TRAINING: separate decision. To opt out, move these into their own group with "Disallow: /" ---
 User-agent: GPTBot
-Allow: /
-
 User-agent: ClaudeBot
-Allow: /
-
-Sitemap: {{ shop.url }}/sitemap.xml
+User-agent: CCBot
+{%- for group in robots.default_groups -%}
+  {%- if group.user_agent.value == '*' -%}
+    {%- for rule in group.rules %}
+{{ rule }}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endfor %}
 ```
 **Note on merchant intent:** Allowing the retrieval bots while disallowing `GPTBot` **and** `ClaudeBot` is a coherent, defensible position — cited but not trained on. Do not flag that combination as an error; it is a deliberate and increasingly common choice. The incoherent combination is the reverse: training allowed, citations blocked.
 
