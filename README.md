@@ -1,8 +1,8 @@
 # Shopify Theme Audit Skill for Claude Code
 
-> Drop eight files into your Shopify project. Ask Claude Code to audit the theme. Get a scored report covering performance, accessibility, conversion, third-party app overhead, SEO, AEO (ChatGPT / Claude / Perplexity citations), and GEO (AI Overviews) — with exact file references, line numbers, and working code fixes, in under five minutes.
+> Install it as a Claude Code skill with one `git clone`, or drop eight files into your Shopify project. Ask Claude Code to audit the theme. Get a scored report covering performance, accessibility, conversion, third-party app overhead, SEO, AEO (ChatGPT / Claude / Perplexity citations), and GEO (AI Overviews) — with exact file references, line numbers, and working code fixes, in under five minutes.
 
-[![Version](https://img.shields.io/badge/version-2.3-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.4-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Works with Claude Code](https://img.shields.io/badge/Works%20with-Claude%20Code-orange)](https://claude.ai/code)
 [![Shopify](https://img.shields.io/badge/Shopify-Online%20Store%202.0-96BF48)](https://shopify.dev)
@@ -32,6 +32,8 @@ No API calls, no SaaS, no subscription. It runs inside Claude Code using your ex
 ---
 
 ## What changed in this version
+
+> **v2.4 (November 2026)** — installs as a standard Claude Code skill. A `SKILL.md` now sits at the root, so cloning the repo into `.claude/skills/` is the whole setup. The drop-in method still works, and the audit itself is unchanged.
 
 > **v2.3 (August 2026)** — **correction.** Every major AI provider runs **three** crawlers, not one, and this skill got that wrong twice. v2.0 omitted `OAI-SearchBot`; v2.1 fixed OpenAI then made the identical error on Anthropic, listing `ClaudeBot` (the *training* crawler) as the only Claude bot and filing it under retrieval. `Claude-SearchBot` gates Claude citations; `Claude-User` handles live fetches.
 >
@@ -180,6 +182,26 @@ It also generates a **"What This Theme Does Well"** section so the report is cre
 
 ## Installation
 
+### Option A: install as a Claude Code skill (recommended)
+
+For one theme project, run this from the theme's root folder:
+
+```bash
+git clone https://github.com/tanujrajputdev/shopify-theme-audit-skill.git .claude/skills/shopify-theme-audit
+```
+
+Or, to have it in every project on your machine:
+
+```bash
+git clone https://github.com/tanujrajputdev/shopify-theme-audit-skill.git ~/.claude/skills/shopify-theme-audit
+```
+
+Open the theme in Claude Code and ask for an audit. Claude Code loads the skill when your request matches its description in `SKILL.md`, and reads the checklists from the skill's folder, so nothing is copied into your theme. To update later, run `git pull` inside that folder.
+
+If your theme is itself a git repo, either commit `.claude/skills/shopify-theme-audit/` with it or add that path to `.gitignore`.
+
+### Option B: drop the files into your theme
+
 **Step 1.** Clone or download this repo.
 
 ```bash
@@ -304,6 +326,7 @@ block from before-after.md as the fix — do not paraphrase.
 
 | File | What it contains |
 |---|---|
+| `SKILL.md` | Skill entry point for Claude Code: the skill's name and description, and where its files live. It points to `CLAUDE.md` |
 | `CLAUDE.md` | Master instructions — how Claude Code runs the audit, step by step |
 | `audit-checklist.md` | Performance, accessibility, and CRO checks with severity ratings and locations |
 | `seo-aeo-geo-checklist.md` | SEO, Answer Engine Optimization, and Generative Engine Optimization checks |
