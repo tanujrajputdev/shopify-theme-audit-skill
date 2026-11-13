@@ -4,7 +4,17 @@ This file documents what changed between versions and how much more the current 
 
 ---
 
-## v2.3 — August 2026 (current)
+## v2.4 — November 2026 (current)
+
+**Installs as a standard Claude Code skill.**
+
+- Added `SKILL.md` at the repo root, with the skill's name and a description of when to use it. Cloning the repo into `.claude/skills/shopify-theme-audit` (one project) or `~/.claude/skills/shopify-theme-audit` (every project) is now the whole setup, and skill directories that read `SKILL.md` can list it.
+- `SKILL.md` points to `CLAUDE.md`, which stays the single source of the audit procedure. Nothing about the audit changed.
+- The drop-in install (copying the eight files into the theme root) still works, and is now Option B in the README.
+
+---
+
+## v2.3 — August 2026
 
 **Correcting the same mistake twice: every AI provider runs three crawlers, not one.**
 

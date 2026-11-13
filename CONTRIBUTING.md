@@ -1,5 +1,9 @@
 # Contributing
 
+## Changing the audit procedure
+
+Edit `CLAUDE.md`. `SKILL.md` only holds the skill's name and description and points to `CLAUDE.md`, so keep the procedure out of it; that way the skill install and the drop-in install never drift apart.
+
 ## Adding a new check
 
 1. Open `audit-checklist.md`
